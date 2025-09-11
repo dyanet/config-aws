@@ -1,0 +1,230 @@
+version: '3.8'
+
+services:
+  # LocalStack - Local AWS services emulation
+  localstack:
+    container_name: nest-config-aws-localstack
+    image: localstack/localstack:3.0
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      # LocalStack configuration
+      - DEBUG=${DEBUG-0}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_HOST=localhost
+      - EDGE_PORT=4566
+      
+      # AWS Services to enable
+      - SERVICES=s3,dynamodb,sqs,sns,lambda,secretsmanager,ssm,logs,cloudwatch,iam,sts
+      
+      # Persistence
+      - PERSISTENCE=${PERSISTENCE-0}
+      - DATA_DIR=/tmp/localstack/data
+      
+      # AWS Configuration
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      
+      # Feature flags
+      - DISABLE_CORS_CHECKS=1
+      - SKIP_SSL_CERT_DOWNLOAD=1
+      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-}
+    volumes:
+      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./localstack-init:/etc/localstack/init/ready.d"
+    networks:
+      - nest-config-aws-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # PostgreSQL Database
+  postgres:
+    container_name: nest-config-aws-postgres
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=myapp_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - nest-config-aws-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d myapp_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    container_name: nest-config-aws-redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redispassword
+    volumes:
+      - redis_data:/data
+    networks:
+      - nest-config-aws-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Example Application (Basic Usage)
+  app-basic:
+    container_name: nest-config-aws-app-basic
+    build:
+      context: ../basic-usage
+      dockerfile: ../../docker-compose/Dockerfile.example
+    ports:
+      - "3001:3000"
+    environment:
+      - APP_ENV=local
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/myapp_dev
+      - DEBUG_MODE=true
+      - ENABLE_SWAGGER=true
+      - LOG_LEVEL=debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nest-config-aws-network
+    profiles:
+      - basic
+
+  # Example Application (Custom Schema)
+  app-custom:
+    container_name: nest-config-aws-app-custom
+    build:
+      context: ../custom-schema
+      dockerfile: ../../docker-compose/Dockerfile.example
+    ports:
+      - "3002:3000"
+    environment:
+      - APP_ENV=local
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/myapp_dev
+      - API_KEY=local-api-key-for-testing
+      - JWT_SECRET=local-jwt-secret-32-characters-long
+      - DEBUG_MODE=true
+      - ENABLE_SWAGGER=true
+      - ENABLE_METRICS=true
+      - LOG_LEVEL=debug
+      - REDIS_URL=redis://:redispassword@redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nest-config-aws-network
+    profiles:
+      - custom
+
+  # Example Application (AWS Integration with LocalStack)
+  app-aws:
+    container_name: nest-config-aws-app-aws
+    build:
+      context: ../aws-integration
+      dockerfile: ../../docker-compose/Dockerfile.example
+    ports:
+      - "3003:3000"
+    environment:
+      - APP_ENV=development
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      
+      # Database Configuration
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/myapp_dev
+      - DATABASE_POOL_SIZE=5
+      - DATABASE_SSL=false
+      
+      # AWS Configuration (LocalStack)
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      
+      # AWS Services Configuration
+      - AWS_S3_BUCKET=my-test-bucket
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/my-test-queue
+      - SNS_TOPIC_ARN=arn:aws:sns:us-east-1:000000000000:my-test-topic
+      - LAMBDA_FUNCTION_NAME=my-test-function
+      - DYNAMODB_TABLE_PREFIX=myapp
+      
+      # Security Configuration
+      - API_KEY=local-api-key-for-testing
+      - JWT_SECRET=local-jwt-secret-32-characters-long
+      
+      # Feature Flags
+      - DEBUG_MODE=true
+      - ENABLE_SWAGGER=true
+      - ENABLE_METRICS=true
+      - ENABLE_CLOUDWATCH_METRICS=true
+      - ENABLE_X_RAY_TRACING=false
+      - LOG_LEVEL=debug
+      
+      # Redis Configuration
+      - REDIS_CLUSTER_ENDPOINT=redis
+      - REDIS_PORT=6379
+      - REDIS_AUTH_TOKEN=redispassword
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks:
+      - nest-config-aws-network
+    profiles:
+      - aws
+
+  # AWS CLI for testing LocalStack
+  awscli:
+    container_name: nest-config-aws-awscli
+    image: amazon/aws-cli:latest
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - nest-config-aws-network
+    profiles:
+      - tools
+    entrypoint: /bin/sh
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  nest-config-aws-network:
+    driver: bridge

@@ -1,0 +1,27 @@
+# Source files
+src/
+tests/
+examples/
+
+# Configuration files
+tsconfig*.json
+jest.config.js
+.eslintrc.js
+.nvmrc
+
+# Development files
+.gitignore
+.npmignore
+coverage/
+*.log
+
+# CI/CD files
+.github/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
