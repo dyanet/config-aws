@@ -84,7 +84,6 @@ export class ConfigModule {
         const serviceOptions: ConfigServiceOptions<T> = {
           schema: options.schema || (defaultConfigSchema as any),
           loaders,
-          envPrefix: options.envPrefix,
           validateOnLoad: !options.ignoreValidationErrors,
           enableLogging: true,
         };
@@ -131,7 +130,6 @@ export class ConfigModule {
         const serviceOptions: ConfigServiceOptions = {
           schema: options.schema || defaultConfigSchema,
           loaders,
-          envPrefix: options.envPrefix,
           validateOnLoad: !options.ignoreValidationErrors,
           enableLogging: true,
         };

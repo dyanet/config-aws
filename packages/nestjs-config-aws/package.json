@@ -1,6 +1,6 @@
 {
   "name": "@dyanet/nestjs-config-aws",
-  "version": "1.2.0",
+  "version": "1.2.0-beta.1",
   "description": "AWS-integrated configuration management for NestJS applications with support for environment variables, AWS Secrets Manager, and AWS Systems Manager Parameter Store. Includes @nestjs/config integration for seamless compatibility.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -66,6 +66,14 @@
     "@nestjs/core": "^11.0.0",
     "zod": "^3.22.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dyanet/config-aws.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dyanet/config-aws/issues"
+  },
+  "homepage": "https://github.com/dyanet/config-aws/tree/main/packages/nestjs-config-aws",
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "@aws-sdk/client-ssm": "^3.0.0",

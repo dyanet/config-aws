@@ -1,7 +1,7 @@
 {
-  "name": "@dyanet/config-aws",
-  "version": "1.0.0",
-  "description": "Framework-agnostic AWS configuration management with support for environment variables, AWS Secrets Manager, SSM Parameter Store, S3, and .env files",
+  "name": "@dyanet/nextjs-config-aws",
+  "version": "1.0.0-beta.1",
+  "description": "Next.js adapter for AWS configuration management with support for server components, runtime environment variables, and AWS services integration",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -26,21 +26,25 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
+    "lint": "eslint src/**/*.ts src/**/*.tsx",
+    "lint:fix": "eslint src/**/*.ts src/**/*.tsx --fix",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
+    "nextjs",
+    "next.js",
     "configuration",
     "aws",
     "secrets-manager",
     "ssm",
     "parameter-store",
     "s3",
-    "env-file",
     "typescript",
     "zod",
-    "framework-agnostic"
+    "server-components",
+    "app-router",
+    "runtime-env",
+    "environment-variables"
   ],
   "author": "Dyanet",
   "license": "MIT",
@@ -52,22 +56,12 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "peerDependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.0.0",
-    "@aws-sdk/client-ssm": "^3.0.0",
-    "@aws-sdk/client-s3": "^3.0.0",
-    "zod": "^3.22.0"
+  "dependencies": {
+    "@dyanet/config-aws": "^1.0.0"
   },
-  "peerDependenciesMeta": {
-    "@aws-sdk/client-secrets-manager": {
-      "optional": true
-    },
-    "@aws-sdk/client-ssm": {
-      "optional": true
-    },
-    "@aws-sdk/client-s3": {
-      "optional": true
-    }
+  "peerDependencies": {
+    "next": "^16.0.0",
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.0.0",
@@ -75,12 +69,11 @@
     "@aws-sdk/client-s3": "^3.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "aws-sdk-client-mock": "^4.0.0",
-    "eslint": "^8.0.0",
+    "@types/react": "^19.0.0",
     "fast-check": "^3.15.0",
     "jest": "^29.5.0",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
     "rimraf": "^5.0.0",
     "ts-jest": "^29.1.0",
     "typescript": "^5.9.2",
@@ -93,5 +86,5 @@
   "bugs": {
     "url": "https://github.com/dyanet/config-aws/issues"
   },
-  "homepage": "https://github.com/dyanet/config-aws/tree/main/packages/config-aws"
+  "homepage": "https://github.com/dyanet/config-aws/tree/main/packages/nextjs-config-aws"
 }

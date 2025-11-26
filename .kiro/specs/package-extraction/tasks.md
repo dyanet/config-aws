@@ -289,73 +289,141 @@
 
 ## Phase 3: Next.js Adapter Package (nextjs-config-aws)
 
-- [ ] 16. Initialize nextjs-config-aws package structure
-  - [ ] 16.1 Create packages/nextjs-config-aws directory with package.json
+- [x] 16. Initialize nextjs-config-aws package structure
+
+
+
+
+
+
+  - [x] 16.1 Create packages/nextjs-config-aws directory with package.json
+
     - Add config-aws as runtime dependency
     - Configure peer dependencies: next, react
     - _Requirements: 3.1, 3.2_
-  - [ ] 16.2 Create src/index.ts re-exporting config-aws types
+
+  - [x] 16.2 Create src/index.ts re-exporting config-aws types
+
     - Re-export all public types from config-aws
     - _Requirements: 3.6_
 
-- [ ] 17. Implement server-side configuration loading
-  - [ ] 17.1 Create src/server/get-config.ts
+- [x] 17. Implement server-side configuration loading
+
+
+
+
+
+  - [x] 17.1 Create src/server/get-config.ts
+
+
     - Implement getConfig() function with caching
     - Use ConfigManager from config-aws internally
     - _Requirements: 3.3, 3.4_
-  - [ ] 17.2 Write property test for caching behavior
+  - [x] 17.2 Write property test for caching behavior
+
+
     - **Property 7: Next.js Configuration Caching**
     - **Validates: Requirements 3.4**
 
-- [ ] 18. Implement React context provider
-  - [ ] 18.1 Create src/server/config-provider.tsx
+- [x] 18. Implement React context provider
+
+
+
+
+
+  - [x] 18.1 Create src/server/config-provider.tsx
+
+
     - Implement createConfigProvider() for server components
     - _Requirements: 3.5_
-  - [ ] 18.2 Write unit tests for config provider
+
+  - [x] 18.2 Write unit tests for config provider
+
     - Test context creation and value access
     - _Requirements: 3.5_
 
-- [ ] 19. Implement runtime environment variables
-  - [ ] 19.1 Create src/components/public-env-script.tsx
+- [x] 19. Implement runtime environment variables
+
+
+
+
+
+
+  - [x] 19.1 Create src/components/public-env-script.tsx
+
     - Server component that renders script tag with env vars
     - Support allowlist and prefix filtering
     - Configurable variable name and CSP nonce
     - _Requirements: 7.1, 7.2, 7.5, 7.6_
-  - [ ] 19.2 Create src/client/env.ts
+
+  - [x] 19.2 Create src/client/env.ts
+
     - Client-side env() function reading from window.__ENV
     - Support default values
     - _Requirements: 7.3_
-  - [ ] 19.3 Write property test for PublicEnvScript output
+
+  - [x] 19.3 Write property test for PublicEnvScript output
+
     - **Property 8: PublicEnvScript Output Correctness**
     - **Validates: Requirements 7.2, 7.5, 7.6**
 
-- [ ] 20. Checkpoint - Next.js adapter tests
+- [x] 20. Checkpoint - Next.js adapter tests
+
+
+
+
+
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Phase 4: Migration and Documentation
 
-- [ ] 21. Create migration tooling
-  - [ ] 21.1 Update existing nestjs-config-aws to use new package structure
+- [x] 21. Create migration tooling
+
+
+
+
+
+
+  - [x] 21.1 Update existing nestjs-config-aws to use new package structure
+
     - Refactor to thin adapter layer
     - Ensure backward compatibility
     - _Requirements: 5.1, 5.2, 5.3, 5.4_
-  - [ ] 21.2 Write backward compatibility tests
+
+  - [x] 21.2 Write backward compatibility tests
+
     - Test existing API surface still works
     - _Requirements: 5.1, 5.4_
 
-- [ ] 22. Update documentation
-  - [ ] 22.1 Create README.md for config-aws package
+- [x] 22. Update documentation
+
+
+
+
+
+  - [x] 22.1 Create README.md for config-aws package
+
+
     - Document all loaders, ConfigManager, options
     - Include usage examples for standalone use
     - _Requirements: 1.1_
-  - [ ] 22.2 Update README.md for nestjs-config-aws package
+  - [x] 22.2 Update README.md for nestjs-config-aws package
+
+
     - Document migration from monolithic package
     - Update examples to show thin adapter usage
     - _Requirements: 2.1_
-  - [ ] 22.3 Create README.md for nextjs-config-aws package
+
+  - [x] 22.3 Create README.md for nextjs-config-aws package
+
     - Document getConfig(), PublicEnvScript, env()
     - Include App Router and Pages Router examples
     - _Requirements: 3.1, 7.1_
 
-- [ ] 23. Final Checkpoint - All packages
+- [x] 23. Final Checkpoint - All packages
+
+
+
+
+
   - Ensure all tests pass, ask the user if questions arise.
