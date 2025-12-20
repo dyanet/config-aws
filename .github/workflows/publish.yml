@@ -27,6 +27,11 @@ jobs:
       - name: Check which packages need publishing
         id: check
         run: |
+          # Compare semver versions: returns true if v1 > v2
+          version_gt() {
+            test "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" != "$1"
+          }
+          
           check_package() {
             local dir=$1
             local name=$2
@@ -41,11 +46,14 @@ jobs:
             echo "  Local version: ${local_version}"
             echo "  Published version: ${published_version:-none}"
             
-            if [ "$local_version" != "$published_version" ]; then
-              echo "  -> Needs publishing"
+            if [ -z "$published_version" ]; then
+              echo "  -> Not yet published, needs publishing"
+              echo "${output_key}=true" >> $GITHUB_OUTPUT
+            elif version_gt "$local_version" "$published_version"; then
+              echo "  -> Local version is higher, needs publishing"
               echo "${output_key}=true" >> $GITHUB_OUTPUT
             else
-              echo "  -> Already published"
+              echo "  -> Published version is same or higher, skipping"
               echo "${output_key}=false" >> $GITHUB_OUTPUT
             fi
           }
@@ -59,9 +67,6 @@ jobs:
     if: needs.determine-packages.outputs.config-aws == 'true'
     runs-on: ubuntu-latest
     environment: prod
-    defaults:
-      run:
-        working-directory: packages/config-aws
     steps:
       - uses: actions/checkout@v4
 
@@ -70,16 +75,17 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
+      - name: Install dependencies (from root)
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build package
+        run: npm run build --workspace=@dyanet/config-aws
 
-      - name: Test
-        run: npm test
+      - name: Test package
+        run: npm run test --workspace=@dyanet/config-aws
 
       - name: Publish with provenance (OIDC)
+        working-directory: packages/config-aws
         run: npm publish --provenance --access public
 
   publish-nestjs-config-aws:
@@ -90,9 +96,6 @@ jobs:
       (needs.publish-config-aws.result == 'success' || needs.publish-config-aws.result == 'skipped')
     runs-on: ubuntu-latest
     environment: prod
-    defaults:
-      run:
-        working-directory: packages/nestjs-config-aws
     steps:
       - uses: actions/checkout@v4
 
@@ -101,16 +104,17 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
+      - name: Install dependencies (from root)
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build package
+        run: npm run build --workspace=@dyanet/nestjs-config-aws
 
-      - name: Test
-        run: npm test
+      - name: Test package
+        run: npm run test --workspace=@dyanet/nestjs-config-aws
 
       - name: Publish with provenance (OIDC)
+        working-directory: packages/nestjs-config-aws
         run: npm publish --provenance --access public
 
   publish-nextjs-config-aws:
@@ -121,9 +125,6 @@ jobs:
       (needs.publish-config-aws.result == 'success' || needs.publish-config-aws.result == 'skipped')
     runs-on: ubuntu-latest
     environment: prod
-    defaults:
-      run:
-        working-directory: packages/nextjs-config-aws
     steps:
       - uses: actions/checkout@v4
 
@@ -132,14 +133,15 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
+      - name: Install dependencies (from root)
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build package
+        run: npm run build --workspace=@dyanet/nextjs-config-aws
 
-      - name: Test
-        run: npm test
+      - name: Test package
+        run: npm run test --workspace=@dyanet/nextjs-config-aws
 
       - name: Publish with provenance (OIDC)
+        working-directory: packages/nextjs-config-aws
         run: npm publish --provenance --access public
