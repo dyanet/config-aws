@@ -2,64 +2,58 @@
  * @dyanet/nextjs-config-aws
  *
  * Next.js adapter for AWS configuration management.
- * Provides server-side configuration loading, React context providers,
- * and runtime environment variable support for Next.js applications.
+ * Provides a simplified, opinionated API for loading configuration
+ * with automatic environment detection and AWS integration.
+ *
+ * @example
+ * ```typescript
+ * // Server-side configuration loading
+ * import { getConfig } from '@dyanet/nextjs-config-aws';
+ *
+ * const config = await getConfig({
+ *   schema: mySchema,
+ *   aws: { secretName: '/myapp/config' }
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Runtime environment variables for client
+ * // In layout.tsx (server component)
+ * import { PublicEnvScript } from '@dyanet/nextjs-config-aws';
+ *
+ * <PublicEnvScript publicVars={['API_URL', 'APP_NAME']} />
+ *
+ * // In client component
+ * import { env } from '@dyanet/nextjs-config-aws';
+ *
+ * const apiUrl = env('API_URL');
+ * ```
+ *
+ * @remarks
+ * For advanced loader access, custom loaders, or direct AWS SDK integration,
+ * import from `@dyanet/config-aws` directly:
+ *
+ * ```typescript
+ * import {
+ *   ConfigManager,
+ *   EnvironmentLoader,
+ *   SecretsManagerLoader,
+ *   SSMParameterStoreLoader,
+ * } from '@dyanet/config-aws';
+ * ```
+ *
+ * @packageDocumentation
  */
 
-// Re-export all types and classes from @dyanet/config-aws
-export type {
-  ConfigLoader,
-  ConfigLoaderResult,
-  ConfigManagerOptions,
-  LoaderPrecedence,
-  VerboseOptions,
-  PrecedenceStrategy,
-  ConfigLoadResult,
-  ConfigSourceInfo,
-  Logger,
-  EnvironmentLoaderConfig,
-  EnvFileLoaderConfig,
-  S3LoaderConfig,
-  SecretsManagerLoaderConfig,
-  SSMParameterStoreLoaderConfig,
-} from '@dyanet/config-aws';
+// Error classes for error handling
+export { ConfigurationError, ValidationError } from '@dyanet/config-aws';
 
-export {
-  ConfigurationError,
-  ValidationError,
-  AWSServiceError,
-  ConfigurationLoadError,
-  MissingConfigurationError,
-  EnvironmentLoader,
-  EnvFileLoader,
-  S3Loader,
-  SecretsManagerLoader,
-  SSMParameterStoreLoader,
-  ConfigManager,
-  ConfigValidationUtil,
-  EnvFileParser,
-} from '@dyanet/config-aws';
+// Server-side configuration loading
+export { getConfig, type NextConfigOptions } from './server';
 
-// Server-side exports
-export {
-  getConfig,
-  clearConfigCache,
-  getConfigCacheSize,
-  invalidateConfig,
-  type NextConfigOptions,
-  createConfigProvider,
-  ConfigProvider,
-  useConfig,
-  ConfigContext,
-} from './server';
-
-// Components for runtime environment variables
-export {
-  PublicEnvScript,
-  filterEnvVars,
-  generateScriptContent,
-  type PublicEnvScriptProps,
-} from './components';
+// Component for runtime environment variables
+export { PublicEnvScript, type PublicEnvScriptProps } from './components';
 
 // Client-side environment variable access
-export { env, envFrom, getAllEnv, hasEnv } from './client';
+export { env } from './client';

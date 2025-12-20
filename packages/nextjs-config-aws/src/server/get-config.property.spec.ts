@@ -1,12 +1,16 @@
 /**
  * Property-based tests for getConfig() caching behavior.
  *
- * **Feature: package-extraction, Property 7: Next.js Configuration Caching**
- * **Validates: Requirements 3.4**
+ * **Feature: nextjs-interface-improvements, Property 3: Caching Prevents Duplicate AWS Calls**
+ * **Feature: nextjs-interface-improvements, Property 4: Cache Disabled Causes Fresh Loads**
+ * **Validates: Requirements 3.1, 3.3**
+ * 
+ * NOTE: These tests are placeholders for Task 4 (Update caching implementation).
+ * The caching property tests will be fully implemented in Task 4.2 and 4.3.
+ * For now, we test basic caching behavior with the simplified API.
  */
 
 import * as fc from 'fast-check';
-import type { ConfigLoader } from '@dyanet/config-aws';
 import {
   getConfig,
   clearConfigCache,
@@ -14,96 +18,43 @@ import {
   resetAwsApiCallCount,
 } from './get-config';
 
-/**
- * Mock loader implementation for testing
- */
-class MockLoader implements ConfigLoader {
-  private loadCount = 0;
-
-  constructor(
-    private readonly name: string,
-    private readonly config: Record<string, unknown>
-  ) {}
-
-  getName(): string {
-    return this.name;
-  }
-
-  async isAvailable(): Promise<boolean> {
-    return true;
-  }
-
-  async load(): Promise<Record<string, unknown>> {
-    this.loadCount++;
-    return { ...this.config };
-  }
-
-  getLoadCount(): number {
-    return this.loadCount;
-  }
-
-  resetLoadCount(): void {
-    this.loadCount = 0;
-  }
-}
-
-/**
- * Arbitrary for generating valid configuration keys.
- */
-const validConfigKey = fc
-  .tuple(
-    fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'.split('')),
-    fc.stringOf(
-      fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'.split('')),
-      { minLength: 0, maxLength: 15 }
-    )
-  )
-  .map(([first, rest]) => first + rest);
-
-/**
- * Arbitrary for generating configuration values.
- */
-const configValue = fc.oneof(
-  fc.string({ minLength: 0, maxLength: 50 }),
-  fc.integer(),
-  fc.boolean(),
-  fc.constant(null)
-);
-
-/**
- * Arbitrary for generating a configuration object.
- */
-const configObject = fc.dictionary(validConfigKey, configValue, { minKeys: 1, maxKeys: 10 });
-
 describe('getConfig Property Tests', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     clearConfigCache();
     resetAwsApiCallCount();
+    // Reset environment to a clean state
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   /**
-   * **Feature: package-extraction, Property 7: Next.js Configuration Caching**
-   * **Validates: Requirements 3.4**
+   * **Feature: nextjs-interface-improvements, Property 3: Caching Prevents Duplicate AWS Calls**
+   * **Validates: Requirements 3.1**
    *
-   * For any sequence of getConfig() calls within the cache TTL,
+   * For any sequence of getConfig() calls with identical options within cache TTL,
    * AWS APIs SHALL be called at most once.
    */
-  describe('Property 7: Next.js Configuration Caching', () => {
-    it('should call AWS APIs at most once for multiple getConfig() calls within TTL', async () => {
+  describe('Property 3: Caching Prevents Duplicate AWS Calls (Basic)', () => {
+    it('should call load at most once for multiple getConfig() calls within TTL', async () => {
       await fc.assert(
         fc.asyncProperty(
-          configObject,
           // Generate number of calls (2-10)
           fc.integer({ min: 2, max: 10 }),
-          async (config, numCalls) => {
+          async (numCalls) => {
             clearConfigCache();
             resetAwsApiCallCount();
 
-            const loader = new MockLoader('TestLoader', config);
+            // Set up environment variables for the test
+            process.env['TEST_VAR'] = 'test_value';
 
-            // Make multiple calls with the same options
+            // Make multiple calls with the same options (test environment, no AWS)
             const options = {
-              loaders: [loader],
+              environment: 'test' as const,
               cache: true,
               cacheTTL: 60000, // 1 minute
             };
@@ -112,7 +63,7 @@ describe('getConfig Property Tests', () => {
               await getConfig(options);
             }
 
-            // AWS APIs should be called at most once
+            // Load should be called at most once due to caching
             expect(getAwsApiCallCount()).toBe(1);
           }
         ),
@@ -123,15 +74,15 @@ describe('getConfig Property Tests', () => {
     it('should return the same configuration for cached calls', async () => {
       await fc.assert(
         fc.asyncProperty(
-          configObject,
           fc.integer({ min: 2, max: 5 }),
-          async (config, numCalls) => {
+          async (numCalls) => {
             clearConfigCache();
 
-            const loader = new MockLoader('TestLoader', config);
+            // Set up environment variables
+            process.env['CACHED_VAR'] = 'cached_value';
 
             const options = {
-              loaders: [loader],
+              environment: 'test' as const,
               cache: true,
               cacheTTL: 60000,
             };
@@ -151,20 +102,28 @@ describe('getConfig Property Tests', () => {
         { numRuns: 100 }
       );
     });
+  });
 
-    it('should call AWS APIs again when cache is disabled', async () => {
+  /**
+   * **Feature: nextjs-interface-improvements, Property 4: Cache Disabled Causes Fresh Loads**
+   * **Validates: Requirements 3.3**
+   *
+   * For any sequence of getConfig() calls with cache: false,
+   * each call SHALL trigger a fresh load.
+   */
+  describe('Property 4: Cache Disabled Causes Fresh Loads (Basic)', () => {
+    it('should call load again when cache is disabled', async () => {
       await fc.assert(
         fc.asyncProperty(
-          configObject,
           fc.integer({ min: 2, max: 5 }),
-          async (config, numCalls) => {
+          async (numCalls) => {
             clearConfigCache();
             resetAwsApiCallCount();
 
-            const loader = new MockLoader('TestLoader', config);
+            process.env['UNCACHED_VAR'] = 'uncached_value';
 
             const options = {
-              loaders: [loader],
+              environment: 'test' as const,
               cache: false, // Disable caching
             };
 
@@ -172,39 +131,43 @@ describe('getConfig Property Tests', () => {
               await getConfig(options);
             }
 
-            // AWS APIs should be called for each request
+            // Load should be called for each request when cache is disabled
             expect(getAwsApiCallCount()).toBe(numCalls);
           }
         ),
         { numRuns: 100 }
       );
     });
+  });
 
-    it('should use separate cache entries for different loader configurations', async () => {
+  describe('Cache key differentiation', () => {
+    it('should use separate cache entries for different AWS configurations', async () => {
       await fc.assert(
         fc.asyncProperty(
-          configObject,
-          configObject,
-          async (config1, config2) => {
+          fc.string({ minLength: 1, maxLength: 20 }),
+          fc.string({ minLength: 1, maxLength: 20 }),
+          async (secretName1, secretName2) => {
+            // Skip if names are the same
+            if (secretName1 === secretName2) return;
+
             clearConfigCache();
             resetAwsApiCallCount();
 
-            const loader1 = new MockLoader('Loader1', config1);
-            const loader2 = new MockLoader('Loader2', config2);
-
-            // Call with first loader configuration
+            // Call with first AWS configuration (test env, so AWS won't actually be called)
             await getConfig({
-              loaders: [loader1],
+              environment: 'test' as const,
+              aws: { secretName: secretName1 },
               cache: true,
             });
 
-            // Call with second loader configuration
+            // Call with second AWS configuration
             await getConfig({
-              loaders: [loader2],
+              environment: 'test' as const,
+              aws: { secretName: secretName2 },
               cache: true,
             });
 
-            // Should have made 2 API calls (one for each unique configuration)
+            // Should have made 2 load calls (one for each unique configuration)
             expect(getAwsApiCallCount()).toBe(2);
           }
         ),
@@ -212,31 +175,31 @@ describe('getConfig Property Tests', () => {
       );
     });
 
-    it('should use separate cache entries for different precedence strategies', async () => {
+    it('should use separate cache entries for different environments', async () => {
       await fc.assert(
         fc.asyncProperty(
-          configObject,
-          async (config) => {
+          fc.constantFrom('development', 'production', 'test'),
+          fc.constantFrom('development', 'production', 'test'),
+          async (env1, env2) => {
+            // Skip if environments are the same
+            if (env1 === env2) return;
+
             clearConfigCache();
             resetAwsApiCallCount();
 
-            const loader = new MockLoader('TestLoader', config);
-
-            // Call with aws-first precedence
+            // Call with first environment
             await getConfig({
-              loaders: [loader],
-              precedence: 'aws-first',
+              environment: env1 as 'development' | 'production' | 'test',
               cache: true,
             });
 
-            // Call with local-first precedence
+            // Call with second environment
             await getConfig({
-              loaders: [loader],
-              precedence: 'local-first',
+              environment: env2 as 'development' | 'production' | 'test',
               cache: true,
             });
 
-            // Should have made 2 API calls (one for each precedence strategy)
+            // Should have made 2 load calls (one for each environment)
             expect(getAwsApiCallCount()).toBe(2);
           }
         ),
@@ -247,15 +210,15 @@ describe('getConfig Property Tests', () => {
     it('should reload configuration after cache is cleared', async () => {
       await fc.assert(
         fc.asyncProperty(
-          configObject,
-          async (config) => {
+          fc.boolean(),
+          async () => {
             clearConfigCache();
             resetAwsApiCallCount();
 
-            const loader = new MockLoader('TestLoader', config);
+            process.env['RELOAD_VAR'] = 'reload_value';
 
             const options = {
-              loaders: [loader],
+              environment: 'test' as const,
               cache: true,
             };
 

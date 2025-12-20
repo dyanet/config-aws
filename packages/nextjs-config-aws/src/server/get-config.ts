@@ -1,32 +1,106 @@
 /**
  * Server-side configuration loading for Next.js applications.
  * Provides a cached getConfig() function that uses ConfigManager from @dyanet/config-aws.
+ *
+ * This module provides a simplified, opinionated API that hides loader complexity.
+ * For advanced usage such as custom loaders, direct AWS SDK integration, or
+ * fine-grained control over configuration loading, import from `@dyanet/config-aws` directly:
+ *
+ * @example
+ * ```typescript
+ * // Advanced usage with custom loaders
+ * import {
+ *   ConfigManager,
+ *   EnvironmentLoader,
+ *   SecretsManagerLoader,
+ *   SSMParameterStoreLoader,
+ * } from '@dyanet/config-aws';
+ *
+ * const manager = new ConfigManager({
+ *   loaders: [
+ *     new EnvironmentLoader({ prefix: 'APP_' }),
+ *     new SecretsManagerLoader({ secretName: '/my-app/config' }),
+ *   ],
+ *   schema: mySchema,
+ * });
+ * await manager.load();
+ * const config = manager.getAll();
+ * ```
  */
 
 import type { ZodType } from 'zod';
 import {
   ConfigManager,
-  ConfigLoader,
   ConfigManagerOptions,
-  PrecedenceStrategy,
   ConfigLoadResult,
 } from '@dyanet/config-aws';
+import { detectEnvironment, EnvironmentMode } from './internal/environment';
+import { createLoaders, AwsOptions } from './internal/loader-factory';
 
 /**
- * Options for Next.js configuration loading
+ * Options for Next.js configuration loading.
+ * 
+ * This interface provides a simplified, opinionated API that hides loader complexity
+ * and provides automatic environment detection.
+ * 
+ * @example
+ * ```typescript
+ * // Minimal usage - just schema
+ * const config = await getConfig({ schema: mySchema });
+ * 
+ * // With AWS Secrets Manager
+ * const config = await getConfig({
+ *   schema: mySchema,
+ *   aws: { secretName: '/myapp/config' }
+ * });
+ * 
+ * // Force AWS in development
+ * const config = await getConfig({
+ *   schema: mySchema,
+ *   aws: { secretName: '/myapp/config' },
+ *   forceAwsInDev: true
+ * });
+ * ```
  */
 export interface NextConfigOptions<T = Record<string, unknown>> {
   /** Zod schema for validation */
   schema?: ZodType<T>;
-  /** Array of loaders to use */
-  loaders?: ConfigLoader[];
-  /** Precedence strategy for merging configurations */
-  precedence?: PrecedenceStrategy;
-  /** Enable caching. Default: true */
+  
+  /** 
+   * AWS configuration options.
+   * When provided, enables loading from AWS services based on environment.
+   */
+  aws?: AwsOptions;
+  
+  /** 
+   * Override environment detection ('development' | 'production' | 'test').
+   * When provided, this takes precedence over NODE_ENV auto-detection.
+   */
+  environment?: EnvironmentMode;
+  
+  /** 
+   * Force AWS loading even in development mode.
+   * By default, AWS sources are only loaded in production.
+   * @default false
+   */
+  forceAwsInDev?: boolean;
+  
+  /** 
+   * Enable caching.
+   * @default true
+   */
   cache?: boolean;
-  /** Cache TTL in milliseconds. Default: 60000 (1 minute) */
+  
+  /** 
+   * Cache TTL in milliseconds.
+   * @default 60000 (1 minute)
+   */
   cacheTTL?: number;
-  /** Enable logging. Default: false */
+  
+  /** 
+   * Enable logging.
+   * @default false
+   */
   enableLogging?: boolean;
 }
 
@@ -52,15 +126,16 @@ const configCache = new Map<string, CacheEntry<unknown>>();
 let awsApiCallCount = 0;
 
 /**
- * Generate a cache key from options
+ * Generate a cache key from options.
+ * The cache key is based on aws options, environment, and forceAwsInDev.
  * @internal
  */
-function generateCacheKey<T>(options: NextConfigOptions<T>): string {
-  const loaderNames = options.loaders?.map((l) => l.getName()).join(',') ?? '';
-  const precedence = Array.isArray(options.precedence)
-    ? options.precedence.map((p) => `${p.loader}:${p.priority}`).join(',')
-    : options.precedence ?? 'aws-first';
-  return `${loaderNames}|${precedence}`;
+function generateCacheKey<T>(options: NextConfigOptions<T>, resolvedEnvironment: EnvironmentMode): string {
+  return JSON.stringify({
+    aws: options.aws,
+    environment: resolvedEnvironment,
+    forceAwsInDev: options.forceAwsInDev ?? false,
+  });
 }
 
 /**
@@ -75,12 +150,18 @@ function isCacheValid<T>(entry: CacheEntry<T> | undefined): entry is CacheEntry<
 /**
  * Load configuration for Next.js server-side use.
  * 
- * This function provides caching to avoid repeated AWS API calls during request handling.
- * Configuration is cached based on the loader configuration and precedence strategy.
+ * This function provides automatic environment detection and caching to avoid 
+ * repeated AWS API calls during request handling. Configuration is cached based 
+ * on the AWS options, environment, and forceAwsInDev setting.
+ * 
+ * Environment Behavior:
+ * - development: env vars + .env.local/.env files, AWS only if forceAwsInDev
+ * - production: env vars + .env file + AWS sources (if configured)
+ * - test: env vars only (no file or AWS access)
  * 
  * @example
  * ```typescript
- * import { getConfig, EnvironmentLoader, SecretsManagerLoader } from '@dyanet/nextjs-config-aws';
+ * import { getConfig } from '@dyanet/nextjs-config-aws';
  * import { z } from 'zod';
  * 
  * const schema = z.object({
@@ -88,38 +169,45 @@ function isCacheValid<T>(entry: CacheEntry<T> | undefined): entry is CacheEntry<
  *   API_KEY: z.string(),
  * });
  * 
- * // In a Server Component or API route
- * export default async function Page() {
- *   const config = await getConfig({
- *     schema,
- *     loaders: [
- *       new EnvironmentLoader(),
- *       new SecretsManagerLoader({ secretName: '/my-app/config' }),
- *     ],
- *     precedence: 'aws-first',
- *   });
+ * // Minimal usage - auto-detects environment
+ * const config = await getConfig({ schema });
  * 
- *   return <div>DB: {config.DATABASE_URL}</div>;
- * }
+ * // With AWS Secrets Manager (loaded in production)
+ * const config = await getConfig({
+ *   schema,
+ *   aws: { secretName: '/my-app/config', region: 'us-east-1' }
+ * });
+ * 
+ * // Force AWS in development for testing
+ * const config = await getConfig({
+ *   schema,
+ *   aws: { secretName: '/my-app/config' },
+ *   forceAwsInDev: true
+ * });
  * ```
  * 
  * @param options Configuration options
  * @returns Promise resolving to the validated configuration object
+ * @throws {ValidationError} When schema validation fails (includes invalid key names)
  */
 export async function getConfig<T = Record<string, unknown>>(
   options: NextConfigOptions<T> = {}
 ): Promise<T> {
   const {
     schema,
-    loaders = [],
-    precedence = 'aws-first',
+    aws,
+    environment: explicitEnvironment,
+    forceAwsInDev = false,
     cache = true,
     cacheTTL = 60000, // 1 minute default
     enableLogging = false,
   } = options;
 
-  // Generate cache key
-  const cacheKey = generateCacheKey(options);
+  // Determine environment: explicit option takes precedence over auto-detection
+  const resolvedEnvironment = explicitEnvironment ?? detectEnvironment();
+
+  // Generate cache key based on aws options, environment, and forceAwsInDev
+  const cacheKey = generateCacheKey(options, resolvedEnvironment);
 
   // Check cache if enabled
   if (cache) {
@@ -132,11 +220,18 @@ export async function getConfig<T = Record<string, unknown>>(
   // Increment API call counter (for testing)
   awsApiCallCount++;
 
-  // Create ConfigManager with provided options
+  // Create loaders using the internal factory
+  const loaders = createLoaders({
+    environment: resolvedEnvironment,
+    aws,
+    forceAwsInDev,
+  });
+
+  // Create ConfigManager with generated loaders
   const managerOptions: ConfigManagerOptions<T> = {
     loaders,
     schema,
-    precedence,
+    precedence: 'aws-first',
     validateOnLoad: true,
     enableLogging,
   };
@@ -199,6 +294,7 @@ export function resetAwsApiCallCount(): void {
  * @param options The options used to create the cache entry
  */
 export function invalidateConfig<T>(options: NextConfigOptions<T>): void {
-  const cacheKey = generateCacheKey(options);
+  const resolvedEnvironment = options.environment ?? detectEnvironment();
+  const cacheKey = generateCacheKey(options, resolvedEnvironment);
   configCache.delete(cacheKey);
 }

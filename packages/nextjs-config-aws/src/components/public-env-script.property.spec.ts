@@ -3,6 +3,9 @@
  *
  * **Feature: package-extraction, Property 8: PublicEnvScript Output Correctness**
  * **Validates: Requirements 7.2, 7.5, 7.6**
+ *
+ * **Feature: nextjs-interface-improvements, Property 6: PublicEnvScript Allowlist Filtering**
+ * **Validates: Requirements 4.3, 4.4, 4.5**
  */
 
 import * as fc from 'fast-check';
@@ -369,6 +372,113 @@ describe('PublicEnvScript Property Tests', () => {
           { numRuns: 100 }
         );
       });
+    });
+  });
+
+  /**
+   * **Feature: nextjs-interface-improvements, Property 6: PublicEnvScript Allowlist Filtering**
+   * **Validates: Requirements 4.3, 4.4, 4.5**
+   *
+   * For any set of environment variables and allowlist (publicVars or publicPrefix),
+   * the rendered script SHALL contain only allowed variables.
+   *
+   * Property definition from design:
+   * ∀ envVars: Record<string, string>, allowlist: string[] | prefix: string,
+   *   rendered = PublicEnvScript({ publicVars: allowlist })
+   *   ∧ ∀ key in parsed(rendered): key ∈ allowlist OR key.startsWith(prefix)
+   *   ∧ ∀ key ∉ allowlist AND !key.startsWith(prefix): key ∉ parsed(rendered)
+   */
+  describe('Property 6: PublicEnvScript Allowlist Filtering', () => {
+    it('should only expose variables in publicVars allowlist', () => {
+      fc.assert(
+        fc.property(
+          envVarsObject,
+          fc.array(validEnvVarName, { minLength: 1, maxLength: 10 }),
+          (env, allowlist) => {
+            const result = filterEnvVars(env, allowlist);
+
+            // All keys in result must be in the allowlist (Requirement 4.3)
+            for (const key of Object.keys(result)) {
+              expect(allowlist).toContain(key);
+            }
+
+            // Non-allowlisted variables must NOT be in result (Requirement 4.5)
+            for (const key of Object.keys(env)) {
+              if (!allowlist.includes(key)) {
+                expect(result[key]).toBeUndefined();
+              }
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should only expose variables matching publicPrefix', () => {
+      fc.assert(
+        fc.property(
+          envVarsObject,
+          prefixString,
+          (env, prefix) => {
+            const result = filterEnvVars(env, undefined, prefix);
+
+            // All keys in result must start with prefix (Requirement 4.4)
+            for (const key of Object.keys(result)) {
+              expect(key.startsWith(prefix)).toBe(true);
+            }
+
+            // Variables not matching prefix must NOT be in result (Requirement 4.5)
+            for (const key of Object.keys(env)) {
+              if (!key.startsWith(prefix)) {
+                expect(result[key]).toBeUndefined();
+              }
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should not expose any variables when neither publicVars nor publicPrefix is provided', () => {
+      fc.assert(
+        fc.property(
+          envVarsObject,
+          (env) => {
+            const result = filterEnvVars(env);
+
+            // No variables should be exposed (safe default per Requirement 4.5)
+            expect(Object.keys(result).length).toBe(0);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should give publicVars precedence over publicPrefix when both are provided', () => {
+      fc.assert(
+        fc.property(
+          envVarsObject,
+          fc.array(validEnvVarName, { minLength: 1, maxLength: 5 }),
+          prefixString,
+          (env, allowlist, prefix) => {
+            // When both are provided, publicVars takes precedence
+            const result = filterEnvVars(env, allowlist, prefix);
+
+            // Result should only contain allowlisted keys, not prefix-matched keys
+            for (const key of Object.keys(result)) {
+              expect(allowlist).toContain(key);
+            }
+
+            // Keys matching prefix but not in allowlist should NOT be included
+            for (const key of Object.keys(env)) {
+              if (key.startsWith(prefix) && !allowlist.includes(key)) {
+                expect(result[key]).toBeUndefined();
+              }
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
     });
   });
 });
