@@ -316,7 +316,6 @@ export class AsyncConfigHelperService {
   createLazyAsyncFactory(): ConfigFactory {
     this.logger.debug('Creating lazy async configuration factory');
     
-    // eslint-disable-next-line prefer-const
     let cachedConfig: Record<string, any> | null = null;
     let loadingPromise: Promise<Record<string, any>> | null = null;
     
@@ -334,8 +333,18 @@ export class AsyncConfigHelperService {
         return {};
       }
       
-      // Start loading configuration
-      loadingPromise = this.loadConfigurationLazily();
+      // Start loading configuration and update cache when complete
+      loadingPromise = this.loadConfigurationLazily()
+        .then((config) => {
+          cachedConfig = config;
+          loadingPromise = null;
+          return config;
+        })
+        .catch((error) => {
+          loadingPromise = null;
+          this.logger.error('Lazy loading failed:', error);
+          return {};
+        });
       
       // Return empty config for now (will be populated on next call)
       this.logger.debug('Started lazy loading, returning empty config');
@@ -354,11 +363,8 @@ export class AsyncConfigHelperService {
       const awsFactory = await this.createAsyncConfigFactory();
       const config = awsFactory();
       
-      // Cache the configuration
-      const cachedConfig = config;
-      
       this.logger.debug('Lazy configuration loading completed');
-      return cachedConfig;
+      return config;
     } catch (error) {
       const lazyError = error instanceof Error ? error : new Error(String(error));
       this.logger.error('Lazy configuration loading failed:', lazyError);

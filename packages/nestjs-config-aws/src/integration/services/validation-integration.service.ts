@@ -38,10 +38,13 @@ export class JoiValidationProvider implements ValidationSchemaProvider {
     }
 
     try {
-      const { error } = this.joi.attempt ? 
-        { error: null } :
-        schema.validate(config);
-
+      // Use joi.attempt which throws on validation error, or fall back to schema.validate
+      if (this.joi.attempt) {
+        this.joi.attempt(config, schema);
+        return { isValid: true, errors: [] };
+      }
+      
+      const { error } = schema.validate(config);
       if (error) {
         const errors = error.details?.map((detail: any) => detail.message) || [error.message];
         return { isValid: false, errors };
