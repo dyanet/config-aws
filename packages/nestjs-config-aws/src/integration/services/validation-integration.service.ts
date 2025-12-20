@@ -22,7 +22,7 @@ export class JoiValidationProvider implements ValidationSchemaProvider {
     try {
       // Try to import Joi dynamically
       this.joi = require('joi');
-    } catch (error) {
+    } catch {
       // Joi is not available
       this.joi = null;
     }
@@ -68,7 +68,7 @@ export class ClassValidatorProvider implements ValidationSchemaProvider {
       // Try to import class-validator and class-transformer dynamically
       this.classValidator = require('class-validator');
       this.classTransformer = require('class-transformer');
-    } catch (error) {
+    } catch {
       // class-validator is not available
       this.classValidator = null;
       this.classTransformer = null;
