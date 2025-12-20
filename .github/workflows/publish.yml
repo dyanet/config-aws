@@ -1,0 +1,145 @@
+name: Publish Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  id-token: write   # Required for npm OIDC provenance
+  contents: read
+
+jobs:
+  determine-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      config-aws: ${{ steps.check.outputs.config-aws }}
+      nestjs-config-aws: ${{ steps.check.outputs.nestjs-config-aws }}
+      nextjs-config-aws: ${{ steps.check.outputs.nextjs-config-aws }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check which packages need publishing
+        id: check
+        run: |
+          check_package() {
+            local dir=$1
+            local name=$2
+            local output_key=$3
+            
+            local_version=$(node -p "require('./${dir}/package.json').version")
+            
+            # Get published version from npm (returns empty if not published)
+            published_version=$(npm view "${name}" version 2>/dev/null || echo "")
+            
+            echo "Package: ${name}"
+            echo "  Local version: ${local_version}"
+            echo "  Published version: ${published_version:-none}"
+            
+            if [ "$local_version" != "$published_version" ]; then
+              echo "  -> Needs publishing"
+              echo "${output_key}=true" >> $GITHUB_OUTPUT
+            else
+              echo "  -> Already published"
+              echo "${output_key}=false" >> $GITHUB_OUTPUT
+            fi
+          }
+          
+          check_package "packages/config-aws" "@dyanet/config-aws" "config-aws"
+          check_package "packages/nestjs-config-aws" "@dyanet/nestjs-config-aws" "nestjs-config-aws"
+          check_package "packages/nextjs-config-aws" "@dyanet/nextjs-config-aws" "nextjs-config-aws"
+
+  publish-config-aws:
+    needs: determine-packages
+    if: needs.determine-packages.outputs.config-aws == 'true'
+    runs-on: ubuntu-latest
+    environment: prod
+    defaults:
+      run:
+        working-directory: packages/config-aws
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish with provenance (OIDC)
+        run: npm publish --provenance --access public
+
+  publish-nestjs-config-aws:
+    needs: [determine-packages, publish-config-aws]
+    if: |
+      always() &&
+      needs.determine-packages.outputs.nestjs-config-aws == 'true' &&
+      (needs.publish-config-aws.result == 'success' || needs.publish-config-aws.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: prod
+    defaults:
+      run:
+        working-directory: packages/nestjs-config-aws
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish with provenance (OIDC)
+        run: npm publish --provenance --access public
+
+  publish-nextjs-config-aws:
+    needs: [determine-packages, publish-config-aws]
+    if: |
+      always() &&
+      needs.determine-packages.outputs.nextjs-config-aws == 'true' &&
+      (needs.publish-config-aws.result == 'success' || needs.publish-config-aws.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: prod
+    defaults:
+      run:
+        working-directory: packages/nextjs-config-aws
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish with provenance (OIDC)
+        run: npm publish --provenance --access public

@@ -1,5 +1,10 @@
 # @dyanet/config-aws
 
+[![npm version](https://img.shields.io/npm/v/@dyanet/config-aws.svg)](https://www.npmjs.com/package/@dyanet/config-aws)
+[![CI](https://github.com/dyanet/config-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/dyanet/config-aws/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/dyanet/config-aws/flag/config-aws/graph/badge.svg)](https://codecov.io/gh/dyanet/config-aws)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Framework-agnostic AWS configuration management library for Node.js applications. Load configuration from environment variables, AWS Secrets Manager, SSM Parameter Store, S3, and `.env` files with configurable precedence.
 
 ## Features

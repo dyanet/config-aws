@@ -1,5 +1,10 @@
 # @dyanet/nestjs-config-aws
 
+[![npm version](https://img.shields.io/npm/v/@dyanet/nestjs-config-aws.svg)](https://www.npmjs.com/package/@dyanet/nestjs-config-aws)
+[![CI](https://github.com/dyanet/config-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/dyanet/config-aws/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/dyanet/config-aws/flag/nestjs-config-aws/graph/badge.svg)](https://codecov.io/gh/dyanet/config-aws)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 NestJS adapter for AWS configuration management. A thin wrapper around [@dyanet/config-aws](../config-aws) that provides NestJS dependency injection and module patterns.
 
 ## Features

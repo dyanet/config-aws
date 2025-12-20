@@ -1,5 +1,10 @@
 # @dyanet/nextjs-config-aws
 
+[![npm version](https://img.shields.io/npm/v/@dyanet/nextjs-config-aws.svg)](https://www.npmjs.com/package/@dyanet/nextjs-config-aws)
+[![CI](https://github.com/dyanet/config-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/dyanet/config-aws/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/dyanet/config-aws/flag/nextjs-config-aws/graph/badge.svg)](https://codecov.io/gh/dyanet/config-aws)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Next.js adapter for AWS configuration management. A thin wrapper around [@dyanet/config-aws](../config-aws) that provides server-side configuration loading, runtime environment variables, and automatic environment detection.
 
 ## Features

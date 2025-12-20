@@ -326,4 +326,4 @@ To add new examples or improve existing ones:
 - **Documentation**: [Main README](../README.md)
 - **API Reference**: [API Documentation](../docs/API.md)
 - **Troubleshooting**: [Troubleshooting Guide](../docs/TROUBLESHOOTING.md)
-- **Issues**: [GitHub Issues](https://github.com/your-org/nestjs-config-aws/issues)
+- **Issues**: [GitHub Issues](https://github.com/dyanet/config-aws/issues)

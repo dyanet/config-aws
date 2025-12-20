@@ -510,7 +510,7 @@ ConfigModule.forRoot({
 - **Main Documentation**: [README.md](../README.md)
 - **API Reference**: [API Documentation](../docs/API.md)
 - **Examples**: [Examples Directory](../examples/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/nest-config-aws/issues)
+- **Issues**: [GitHub Issues](https://github.com/dyanet/config-aws/issues)
 
 ---
 

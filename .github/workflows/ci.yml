@@ -2,43 +2,59 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
-    
+        node-version: [20.x, 22.x]
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: commons-nodejs/nest-config-aws/package-lock.json
-    
-    - name: Install dependencies
-      run: npm ci
-      working-directory: commons-nodejs/nest-config-aws
-    
-    - name: Run quality checks
-      run: npm run quality
-      working-directory: commons-nodejs/nest-config-aws
-    
-    - name: Build package
-      run: npm run build
-      working-directory: commons-nodejs/nest-config-aws
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: commons-nodejs/nest-config-aws/coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Lint all packages
+        run: npm run lint
+
+      - name: Test all packages
+        run: npm run test
+
+      - name: Upload coverage (config-aws)
+        if: matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v4
+        with:
+          files: packages/config-aws/coverage/lcov.info
+          flags: config-aws
+          name: config-aws
+
+      - name: Upload coverage (nestjs-config-aws)
+        if: matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v4
+        with:
+          files: packages/nestjs-config-aws/coverage/lcov.info
+          flags: nestjs-config-aws
+          name: nestjs-config-aws
+
+      - name: Upload coverage (nextjs-config-aws)
+        if: matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v4
+        with:
+          files: packages/nextjs-config-aws/coverage/lcov.info
+          flags: nextjs-config-aws
+          name: nextjs-config-aws
