@@ -250,8 +250,8 @@ Check out the comprehensive examples in the `examples/` directory:
 
 ## 🆘 Need Help?
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/nestjs-config-aws/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/nestjs-config-aws/discussions)
+- **Issues**: [GitHub Issues](https://github.com/dyanet/config-aws/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dyanet/config-aws/discussions)
 - **Documentation**: [README.md](README.md)
 
 ## 🎯 Common Use Cases

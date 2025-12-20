@@ -1,6 +1,6 @@
-# Contributing to nest-config-aws
+# Contributing to config-aws
 
-We welcome contributions to nest-config-aws! This guide will help you get started with contributing to the project.
+We welcome contributions to config-aws! This guide will help you get started with contributing to the project.
 
 ## Table of Contents
 
@@ -22,7 +22,7 @@ This project adheres to a code of conduct. By participating, you are expected to
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20+ and npm 10+
 - AWS CLI (for testing AWS integration)
 - Git
 
@@ -31,13 +31,13 @@ This project adheres to a code of conduct. By participating, you are expected to
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/your-username/nest-config-aws.git
-   cd nest-config-aws
+   git clone https://github.com/your-username/config-aws.git
+   cd config-aws
    ```
 
 3. Add the upstream repository:
    ```bash
-   git remote add upstream https://github.com/original-owner/nest-config-aws.git
+   git remote add upstream https://github.com/dyanet/config-aws.git
    ```
 
 ## Development Setup
@@ -47,7 +47,7 @@ This project adheres to a code of conduct. By participating, you are expected to
    npm install
    ```
 
-2. **Build the project:**
+2. **Build all packages:**
    ```bash
    npm run build
    ```
@@ -57,12 +57,7 @@ This project adheres to a code of conduct. By participating, you are expected to
    npm test
    ```
 
-4. **Run tests in watch mode:**
-   ```bash
-   npm run test:watch
-   ```
-
-5. **Run linting:**
+4. **Run linting:**
    ```bash
    npm run lint
    ```
@@ -70,26 +65,29 @@ This project adheres to a code of conduct. By participating, you are expected to
 ## Project Structure
 
 ```
-nest-config-aws/
-├── src/                          # Source code
-│   ├── interfaces/               # TypeScript interfaces
-│   ├── loaders/                  # Configuration loaders
-│   ├── services/                 # Core services
-│   ├── utils/                    # Utility functions
-│   ├── config.module.ts          # Main NestJS module
-│   └── index.ts                  # Public API exports
-├── tests/                        # Test files
-│   ├── unit/                     # Unit tests
-│   ├── integration/              # Integration tests
-│   └── performance/              # Performance tests
-├── examples/                     # Example applications
-│   ├── basic-usage/              # Basic usage example
-│   └── custom-schema/            # Advanced usage example
-├── docs/                         # Documentation
-│   ├── API.md                    # API documentation
-│   └── TROUBLESHOOTING.md        # Troubleshooting guide
-├── dist/                         # Compiled output
-├── coverage/                     # Test coverage reports
+config-aws/
+├── packages/
+│   ├── config-aws/               # Framework-agnostic core library
+│   │   ├── src/
+│   │   │   ├── loaders/          # Configuration loaders
+│   │   │   ├── utils/            # Utility functions
+│   │   │   └── index.ts          # Public API exports
+│   │   └── coverage/             # Test coverage reports
+│   │
+│   ├── nestjs-config-aws/        # NestJS adapter
+│   │   ├── src/
+│   │   │   ├── integration/      # @nestjs/config integration
+│   │   │   ├── services/         # NestJS services
+│   │   │   └── index.ts          # Public API exports
+│   │   ├── examples/             # Example applications
+│   │   └── docs/                 # Documentation
+│   │
+│   └── nextjs-config-aws/        # Next.js adapter
+│       └── src/
+│           └── index.ts          # Public API exports
+│
+├── .github/workflows/            # CI/CD workflows
+├── CONTRIBUTING.md               # This file
 └── README.md                     # Main documentation
 ```
 

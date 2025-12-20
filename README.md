@@ -1,5 +1,12 @@
 # nestjs-config-aws
 
+[![CI](https://github.com/dyanet/config-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/dyanet/config-aws/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/dyanet/config-aws/branch/main/graph/badge.svg)](https://codecov.io/gh/dyanet/config-aws)
+[![npm version](https://img.shields.io/npm/v/@dyanet/config-aws.svg)](https://www.npmjs.com/package/@dyanet/config-aws)
+[![npm version](https://img.shields.io/npm/v/@dyanet/nestjs-config-aws.svg)](https://www.npmjs.com/package/@dyanet/nestjs-config-aws)
+[![npm version](https://img.shields.io/npm/v/@dyanet/nextjs-config-aws.svg)](https://www.npmjs.com/package/@dyanet/nextjs-config-aws)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 AWS-integrated configuration management for NestJS applications with support for environment variables, AWS Secrets Manager, and AWS Systems Manager Parameter Store. **Includes seamless @nestjs/config integration for maximum compatibility.**
 
 ## Features
@@ -1098,18 +1105,18 @@ The module caches configuration after the initial load. To force a reload:
 
 ## Examples
 
-The `examples/` directory contains complete working examples:
+The `packages/nestjs-config-aws/examples/` directory contains complete working examples:
 
-- **[basic-usage/](./examples/basic-usage/)**: Simple setup with default configuration
-- **[custom-schema/](./examples/custom-schema/)**: Advanced usage with custom Zod schema and AWS integration
-- **[aws-integration/](./examples/aws-integration/)**: Production-ready AWS service integration
-- **[nestjs-config-integration/](./examples/nestjs-config-integration/)**: Seamless integration with @nestjs/config
-- **[docker-compose/](./examples/docker-compose/)**: Complete local development environment
+- **[basic-usage/](./packages/nestjs-config-aws/examples/basic-usage/)**: Simple setup with default configuration
+- **[custom-schema/](./packages/nestjs-config-aws/examples/custom-schema/)**: Advanced usage with custom Zod schema and AWS integration
+- **[aws-integration/](./packages/nestjs-config-aws/examples/aws-integration/)**: Production-ready AWS service integration
+- **[nestjs-config-integration/](./packages/nestjs-config-aws/examples/nestjs-config-integration/)**: Seamless integration with @nestjs/config
+- **[docker-compose/](./packages/nestjs-config-aws/examples/docker-compose/)**: Complete local development environment
 
 To run the examples:
 
 ```bash
-cd examples/nestjs-config-integration
+cd packages/nestjs-config-aws/examples/nestjs-config-integration
 npm install
 cp .env.example .env
 npm start
@@ -1164,7 +1171,7 @@ npm run test:coverage
 
 ## License
 
-MIT © [Your Organization]
+MIT © Dyanet
 
 ---
 

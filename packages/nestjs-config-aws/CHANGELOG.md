@@ -284,8 +284,8 @@ Special thanks to the open source community and the teams behind the technologie
 
 - **Documentation**: [README.md](README.md)
 - **Examples**: [examples/](examples/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/nestjs-config-aws/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/nestjs-config-aws/discussions)
+- **Issues**: [GitHub Issues](https://github.com/dyanet/config-aws/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dyanet/config-aws/discussions)
 
 ---
 
