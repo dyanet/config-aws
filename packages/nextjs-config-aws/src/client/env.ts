@@ -4,11 +4,19 @@
  * This module provides a function to read runtime environment variables
  * that were injected by the PublicEnvScript server component.
  *
+ * @remarks
+ * This is part of the simplified Next.js API. For advanced configuration loading
+ * with custom loaders or direct AWS SDK integration, import from `@dyanet/config-aws` directly:
+ *
+ * ```typescript
+ * import { ConfigManager, EnvironmentLoader } from '@dyanet/config-aws';
+ * ```
+ *
  * @example
  * ```tsx
  * 'use client';
  *
- * import { env } from '@dyanet/nextjs-config-aws/client';
+ * import { env } from '@dyanet/nextjs-config-aws';
  *
  * function MyComponent() {
  *   const apiUrl = env('API_URL');

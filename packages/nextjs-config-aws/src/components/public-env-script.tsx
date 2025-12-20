@@ -5,6 +5,10 @@
  * into the client-side JavaScript context, enabling runtime environment variable access
  * without requiring NEXT_PUBLIC_ prefixes at build time.
  *
+ * @remarks
+ * This is part of the simplified Next.js API. For advanced configuration loading
+ * with custom loaders or direct AWS SDK integration, import from `@dyanet/config-aws` directly.
+ *
  * @example
  * ```tsx
  * // In your root layout.tsx

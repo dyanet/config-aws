@@ -1,6 +1,6 @@
 {
   "name": "@dyanet/config-aws",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Framework-agnostic AWS configuration management with support for environment variables, AWS Secrets Manager, SSM Parameter Store, S3, and .env files",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

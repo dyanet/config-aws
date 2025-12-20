@@ -60,11 +60,18 @@ export class SecretsManagerLoader implements ConfigLoader {
 
   /**
    * Get the name of this loader for logging and debugging.
-   * @returns The loader name with secret path
+   * @returns The loader name with secret path or base secret name if path cannot be built
    */
   getName(): string {
-    const secretName = this.buildSecretName();
-    return `SecretsManagerLoader(${secretName})`;
+    // Avoid calling buildSecretName() to prevent stack overflow when
+    // environment mapping is missing - buildSecretName() throws an error
+    // that includes getName() in the message, causing infinite recursion.
+    const envPrefix = this._config.environmentMapping[this._appEnv];
+    if (envPrefix) {
+      return `SecretsManagerLoader(/${envPrefix}${this._config.secretName})`;
+    }
+    // Fallback to base secret name when environment mapping is unavailable
+    return `SecretsManagerLoader(${this._config.secretName})`;
   }
 
   /**
