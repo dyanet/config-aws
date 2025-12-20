@@ -233,7 +233,7 @@ describe('Backward Compatibility - ConfigService API', () => {
     
     // Create a concrete implementation to verify the interface
     class TestConfigService extends ConfigService<{ test: string }> {
-      get<K extends keyof { test: string }>(key: K): { test: string }[K] {
+      get<K extends keyof { test: string }>(_key: K): { test: string }[K] {
         return 'value' as any;
       }
       isInitialized(): boolean {
@@ -250,7 +250,7 @@ describe('Backward Compatibility - ConfigService API', () => {
 
   it('should be an abstract class with isInitialized method signature', () => {
     class TestConfigService extends ConfigService<{ test: string }> {
-      get<K extends keyof { test: string }>(key: K): { test: string }[K] {
+      get<K extends keyof { test: string }>(_key: K): { test: string }[K] {
         return 'value' as any;
       }
       isInitialized(): boolean {
@@ -267,7 +267,7 @@ describe('Backward Compatibility - ConfigService API', () => {
 
   it('should be an abstract class with getAll method signature', () => {
     class TestConfigService extends ConfigService<{ test: string }> {
-      get<K extends keyof { test: string }>(key: K): { test: string }[K] {
+      get<K extends keyof { test: string }>(_key: K): { test: string }[K] {
         return 'value' as any;
       }
       isInitialized(): boolean {

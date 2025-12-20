@@ -316,6 +316,7 @@ export class AsyncConfigHelperService {
   createLazyAsyncFactory(): ConfigFactory {
     this.logger.debug('Creating lazy async configuration factory');
     
+    // eslint-disable-next-line prefer-const
     let cachedConfig: Record<string, any> | null = null;
     let loadingPromise: Promise<Record<string, any>> | null = null;
     
