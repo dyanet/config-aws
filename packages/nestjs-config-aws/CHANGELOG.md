@@ -5,6 +5,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-21
+
+### 🎉 Stable Release
+
+This release promotes the 1.2.0-beta.1 to stable, incorporating all bug fixes and improvements.
+
+### 🐞 Bug Fixes
+
+- **Fixed lazy factory caching** - The lazy async factory now properly caches loaded configuration by chaining `.then()` on the loading promise to update the cache when loading completes
+- **Fixed Joi validation bypass** - The Joi validation provider now correctly uses `joi.attempt()` in a try/catch block to properly catch validation errors instead of always returning success
+
+### ✨ Improvements
+
+- **ESLint 9 upgrade** - Migrated to ESLint 9 with new flat config format
+- **Node.js 20+ requirement** - Updated minimum Node.js version to 20.x
+- **Dependency updates** - Updated rimraf to v6, typescript-eslint to v8
+
 ## [1.0.1] - 2025-08-25
 ### 🐞 Bug Fixes
 
