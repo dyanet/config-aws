@@ -1,6 +1,6 @@
 {
   "name": "@dyanet/nextjs-config-aws",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Next.js adapter for AWS configuration management with support for server components, runtime environment variables, and AWS services integration",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -64,9 +64,9 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "@aws-sdk/client-ssm": "^3.0.0",
-    "@aws-sdk/client-s3": "^3.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
