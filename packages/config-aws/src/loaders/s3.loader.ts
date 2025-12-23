@@ -3,7 +3,7 @@ import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import type { ConfigLoader } from '../interfaces/config-loader.interface';
 import type { S3LoaderConfig } from '../interfaces/s3-loader.interface';
 import { EnvFileParser } from '../utils/env-file-parser.util';
-import { AWSServiceError, ConfigurationLoadError } from '../errors';
+import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
 
 /**
  * Loader that reads configuration from S3 buckets.

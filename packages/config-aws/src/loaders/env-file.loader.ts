@@ -3,7 +3,7 @@ import * as path from 'path';
 import type { ConfigLoader } from '../interfaces/config-loader.interface';
 import type { EnvFileLoaderConfig } from '../interfaces/env-file-loader.interface';
 import { EnvFileParser } from '../utils/env-file-parser.util';
-import { ConfigurationLoadError } from '../errors';
+import { ConfigurationLoadError } from '../errors/index.js';
 
 /**
  * Loader that reads configuration from .env files on the filesystem.

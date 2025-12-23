@@ -3,7 +3,7 @@ import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
 import type { ConfigLoader } from '../interfaces/config-loader.interface';
 import type { SecretsManagerLoaderConfig } from '../interfaces/secrets-manager-loader.interface';
-import { AWSServiceError, ConfigurationLoadError } from '../errors';
+import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
 
 /**
  * Loader that reads configuration from AWS Secrets Manager.
