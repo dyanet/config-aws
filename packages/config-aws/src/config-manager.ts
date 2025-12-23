@@ -1,5 +1,5 @@
 import type { ZodError } from 'zod';
-import type { ConfigLoader } from './interfaces/config-loader.interface';
+import type { ConfigLoader } from './interfaces/config-loader.interface.js';
 import type {
   ConfigManagerOptions,
   ConfigLoadResult,
@@ -7,8 +7,8 @@ import type {
   Logger,
   LoaderPrecedence,
   VerboseOptions,
-} from './interfaces/config-manager.interface';
-import { ConfigurationError, ConfigurationLoadError, ValidationError } from './errors';
+} from './interfaces/config-manager.interface.js';
+import { ConfigurationError, ConfigurationLoadError, ValidationError } from './errors/index.js';
 
 /**
  * Default console logger implementation

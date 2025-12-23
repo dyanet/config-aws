@@ -1,5 +1,5 @@
 import type { ZodType, ZodError, TypeOf } from 'zod';
-import { ValidationError } from '../errors';
+import { ValidationError } from '../errors/index.js';
 
 /**
  * Framework-agnostic validation utility for configuration values.

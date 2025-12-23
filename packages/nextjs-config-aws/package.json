@@ -1,6 +1,6 @@
 {
   "name": "@dyanet/nextjs-config-aws",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Next.js adapter for AWS configuration management with support for server components, runtime environment variables, and AWS services integration",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -20,7 +20,7 @@
   "scripts": {
     "build": "npm run clean && npm run build:types && npm run build:esm && npm run build:cjs",
     "build:types": "tsc --project tsconfig.types.json",
-    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:esm": "tsc --project tsconfig.esm.json && echo {\"type\":\"module\"} > dist/esm/package.json",
     "build:cjs": "tsc --project tsconfig.cjs.json",
     "clean": "rimraf dist",
     "test": "jest",
@@ -64,9 +64,9 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "@aws-sdk/client-ssm": "^3.0.0",
-    "@aws-sdk/client-s3": "^3.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",

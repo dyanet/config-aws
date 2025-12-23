@@ -1,6 +1,6 @@
 {
   "name": "@dyanet/config-aws",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Framework-agnostic AWS configuration management with support for environment variables, AWS Secrets Manager, SSM Parameter Store, S3, and .env files",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -20,7 +20,7 @@
   "scripts": {
     "build": "npm run clean && npm run build:types && npm run build:esm && npm run build:cjs",
     "build:types": "tsc --project tsconfig.types.json",
-    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:esm": "tsc --project tsconfig.esm.json && echo {\"type\":\"module\"} > dist/esm/package.json",
     "build:cjs": "tsc --project tsconfig.cjs.json",
     "clean": "rimraf dist",
     "test": "jest",
