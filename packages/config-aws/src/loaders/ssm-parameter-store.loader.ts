@@ -1,8 +1,8 @@
 import { GetParametersByPathCommand, SSMClient } from '@aws-sdk/client-ssm';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
-import type { ConfigLoader } from '../interfaces/config-loader.interface';
-import type { SSMParameterStoreLoaderConfig } from '../interfaces/ssm-parameter-store-loader.interface';
+import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
+import type { SSMParameterStoreLoaderConfig } from '../interfaces/ssm-parameter-store-loader.interface.js';
 import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
 
 /**

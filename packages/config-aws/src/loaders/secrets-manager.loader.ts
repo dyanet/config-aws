@@ -1,8 +1,8 @@
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
-import type { ConfigLoader } from '../interfaces/config-loader.interface';
-import type { SecretsManagerLoaderConfig } from '../interfaces/secrets-manager-loader.interface';
+import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
+import type { SecretsManagerLoaderConfig } from '../interfaces/secrets-manager-loader.interface.js';
 import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
 
 /**

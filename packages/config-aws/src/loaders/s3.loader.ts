@@ -1,8 +1,8 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import type { ConfigLoader } from '../interfaces/config-loader.interface';
-import type { S3LoaderConfig } from '../interfaces/s3-loader.interface';
-import { EnvFileParser } from '../utils/env-file-parser.util';
+import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
+import type { S3LoaderConfig } from '../interfaces/s3-loader.interface.js';
+import { EnvFileParser } from '../utils/env-file-parser.util.js';
 import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
 
 /**

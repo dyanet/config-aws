@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type { ConfigLoader } from '../interfaces/config-loader.interface';
-import type { EnvFileLoaderConfig } from '../interfaces/env-file-loader.interface';
-import { EnvFileParser } from '../utils/env-file-parser.util';
+import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
+import type { EnvFileLoaderConfig } from '../interfaces/env-file-loader.interface.js';
+import { EnvFileParser } from '../utils/env-file-parser.util.js';
 import { ConfigurationLoadError } from '../errors/index.js';
 
 /**
