@@ -50,7 +50,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: dyanet/nestjsconfig-aws
+          slug: dyanet/nestjs-config-aws
           files: packages/nestjs-config-aws/coverage/lcov.info
           flags: nestjs-config-aws
           name: nestjs-config-aws
