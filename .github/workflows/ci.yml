@@ -37,24 +37,30 @@ jobs:
 
       - name: Upload coverage (config-aws)
         if: matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: dyanet/config-aws
           files: packages/config-aws/coverage/lcov.info
           flags: config-aws
           name: config-aws
 
       - name: Upload coverage (nestjs-config-aws)
         if: matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: dyanet/nestjs-config-aws
           files: packages/nestjs-config-aws/coverage/lcov.info
           flags: nestjs-config-aws
           name: nestjs-config-aws
 
       - name: Upload coverage (nextjs-config-aws)
         if: matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: dyanet/nextjs-config-aws
           files: packages/nextjs-config-aws/coverage/lcov.info
           flags: nextjs-config-aws
           name: nextjs-config-aws
