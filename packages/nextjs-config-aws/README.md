@@ -28,6 +28,9 @@ npm install @dyanet/nextjs-config-aws
 npm install next react
 ```
 
+Supports **Next.js `>=14`** and **React `>=18`** (App Router). Developed and tested against
+the latest Next.js and React.
+
 For AWS services, install the SDK clients you need:
 
 ```bash

@@ -21,10 +21,8 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "@dyanet/config-aws": ["../config-aws/src/index.ts"]
-    }
+    "rootDir": "./src",
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]

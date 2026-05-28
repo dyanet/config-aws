@@ -23,13 +23,8 @@ jest.mock('@aws-sdk/client-ssm', () => {
   };
 });
 
-jest.mock('@aws-sdk/credential-providers', () => ({
-  fromNodeProviderChain: jest.fn().mockReturnValue({}),
-}));
-
 // Get the mock send function
 const getMockSend = () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('@aws-sdk/client-ssm').__mockSend as jest.Mock;
 };
 

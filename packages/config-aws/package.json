@@ -1,6 +1,6 @@
 {
   "name": "@dyanet/config-aws",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Framework-agnostic AWS configuration management with support for environment variables, AWS Secrets Manager, SSM Parameter Store, S3, and .env files",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -10,7 +10,38 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "types": "./dist/types/index.d.ts"
-    }
+    },
+    "./loaders": {
+      "import": "./dist/esm/loaders/index.js",
+      "require": "./dist/cjs/loaders/index.js",
+      "types": "./dist/types/loaders/index.d.ts"
+    },
+    "./loaders/environment": {
+      "import": "./dist/esm/loaders/environment.loader.js",
+      "require": "./dist/cjs/loaders/environment.loader.js",
+      "types": "./dist/types/loaders/environment.loader.d.ts"
+    },
+    "./loaders/env-file": {
+      "import": "./dist/esm/loaders/env-file.loader.js",
+      "require": "./dist/cjs/loaders/env-file.loader.js",
+      "types": "./dist/types/loaders/env-file.loader.d.ts"
+    },
+    "./loaders/s3": {
+      "import": "./dist/esm/loaders/s3.loader.js",
+      "require": "./dist/cjs/loaders/s3.loader.js",
+      "types": "./dist/types/loaders/s3.loader.d.ts"
+    },
+    "./loaders/secrets-manager": {
+      "import": "./dist/esm/loaders/secrets-manager.loader.js",
+      "require": "./dist/cjs/loaders/secrets-manager.loader.js",
+      "types": "./dist/types/loaders/secrets-manager.loader.d.ts"
+    },
+    "./loaders/ssm-parameter-store": {
+      "import": "./dist/esm/loaders/ssm-parameter-store.loader.js",
+      "require": "./dist/cjs/loaders/ssm-parameter-store.loader.js",
+      "types": "./dist/types/loaders/ssm-parameter-store.loader.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -18,10 +49,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "npm run clean && npm run build:types && npm run build:esm && npm run build:cjs",
+    "build": "npm run clean && npm run build:types && npm run build:esm && npm run build:cjs && npm run build:postbuild",
     "build:types": "tsc --project tsconfig.types.json",
     "build:esm": "tsc --project tsconfig.esm.json",
     "build:cjs": "tsc --project tsconfig.cjs.json",
+    "build:postbuild": "node ../../scripts/postbuild.mjs ./dist",
     "clean": "rimraf dist",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -1,7 +1,7 @@
 {
   "name": "@dyanet/nestjs-config-aws",
-  "version": "1.2.0",
-  "description": "AWS-integrated configuration management for NestJS applications with support for environment variables, AWS Secrets Manager, and AWS Systems Manager Parameter Store. Includes @nestjs/config integration for seamless compatibility.",
+  "version": "2.0.0",
+  "description": "AWS-integrated configuration management for NestJS applications with support for environment variables, AWS Secrets Manager, and AWS Systems Manager Parameter Store. Provides an injectable ConfigService and an awsConfigLoader factory for @nestjs/config.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -18,10 +18,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "npm run clean && npm run build:types && npm run build:esm && npm run build:cjs",
+    "build": "npm run clean && npm run build:types && npm run build:esm && npm run build:cjs && npm run build:postbuild",
     "build:types": "tsc --project tsconfig.types.json",
     "build:esm": "tsc --project tsconfig.esm.json",
     "build:cjs": "tsc --project tsconfig.cjs.json",
+    "build:postbuild": "node ../../scripts/postbuild.mjs ./dist",
     "clean": "rimraf dist",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -61,10 +62,15 @@
     "@dyanet/config-aws": "^1.0.0"
   },
   "peerDependencies": {
-    "@nestjs/common": "^11.0.0",
-    "@nestjs/config": "^4.0.0",
-    "@nestjs/core": "^11.0.0",
+    "@nestjs/common": "^10.0.0 || ^11.0.0",
+    "@nestjs/config": "^3.0.0 || ^4.0.0",
+    "@nestjs/core": "^10.0.0 || ^11.0.0",
     "zod": "^3.22.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/config": {
+      "optional": true
+    }
   },
   "repository": {
     "type": "git",

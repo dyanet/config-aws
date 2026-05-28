@@ -5,6 +5,27 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-05-27
+
+### 💥 Breaking Changes
+
+- **Streamlined `@nestjs/config` integration to a single factory.** `NestConfigAwsIntegrationModule` and its associated helpers are replaced by **`awsConfigLoader(options)`**, which returns a `ConfigFactory` for use in `@nestjs/config`'s `load` array. See the README's "Migrating from v1.x" table for a one-to-one mapping.
+- The default generic on `ConfigModule.forRoot<T>` / `forRootAsync<T>` is now `Record<string, unknown>` rather than `DefaultConfigSchema`.
+
+### ✨ Improvements
+
+- **`@nestjs/config` is now an optional peer dependency** — required only when using `awsConfigLoader`.
+- **New simple `aws: { secretName, ssmPrefix, region }` option** on both `ConfigModule.forRoot` and `awsConfigLoader` — the same flat shape used by the Next.js adapter's `getConfig({ aws })`. The verbose `secretsManagerConfig` / `ssmConfig` options remain for advanced control; when both are present, `aws` takes precedence.
+- **No schema means no validation.** When `schema` is omitted, values pass through unvalidated. `defaultConfigSchema` and `environmentSchemas` are still exported for opt-in use.
+- **Widened peer dependency ranges.** `@nestjs/common` and `@nestjs/core` accept `^10.0.0 || ^11.0.0`; `@nestjs/config` accepts `^3.0.0 || ^4.0.0`.
+- **Dual-format build is natively resolvable** under both Node ESM and CJS, with `dist/esm/package.json` and `dist/cjs/package.json` markers and post-build extension fixup for native ESM imports.
+- New `buildAwsLoaders` utility, exported and shared by `ConfigModule` and `awsConfigLoader`.
+
+### ➡️ Unchanged
+
+- The injectable `ConfigService` and `ConfigModule.forRoot()` / `forRootAsync()`.
+- All `@dyanet/config-aws` core re-exports (loaders, `ConfigManager`, errors, utilities).
+
 ## [1.2.0] - 2025-12-21
 
 ### 🎉 Stable Release

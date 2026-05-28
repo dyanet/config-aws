@@ -1,9 +1,9 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+import type { S3Client } from '@aws-sdk/client-s3';
 import type { ConfigLoader } from '../interfaces/config-loader.interface';
 import type { S3LoaderConfig } from '../interfaces/s3-loader.interface';
 import { EnvFileParser } from '../utils/env-file-parser.util';
 import { AWSServiceError, ConfigurationLoadError } from '../errors';
+import { loadOptionalDependency } from '../utils/optional-dependency.util';
 
 /**
  * Loader that reads configuration from S3 buckets.
@@ -30,8 +30,8 @@ import { AWSServiceError, ConfigurationLoadError } from '../errors';
 export class S3Loader implements ConfigLoader {
   /** @internal */
   protected readonly _config: Required<S3LoaderConfig>;
-  /** @internal */
-  protected readonly _client: S3Client;
+  /** @internal Lazily created on first use so the AWS SDK stays optional. */
+  protected _client?: S3Client;
 
   constructor(config: S3LoaderConfig) {
     this._config = {
@@ -40,11 +40,28 @@ export class S3Loader implements ConfigLoader {
       region: config.region || process.env['AWS_REGION'] || 'us-east-1',
       format: config.format || 'auto',
     };
+  }
 
-    this._client = new S3Client({
-      credentials: fromNodeProviderChain(),
-      region: this._config.region,
-    });
+  /**
+   * Lazily import the AWS S3 SDK. Imported on demand so the SDK is an optional
+   * peer dependency and is never loaded unless this loader runs.
+   * @internal
+   */
+  protected importSdk(): Promise<typeof import('@aws-sdk/client-s3')> {
+    return loadOptionalDependency('@aws-sdk/client-s3', () => import('@aws-sdk/client-s3'));
+  }
+
+  /**
+   * Get (creating on first use) the S3 client. The client relies on the AWS SDK's
+   * default Node credential provider chain.
+   * @internal
+   */
+  protected async getClient(): Promise<S3Client> {
+    if (!this._client) {
+      const { S3Client } = await this.importSdk();
+      this._client = new S3Client({ region: this._config.region });
+    }
+    return this._client;
   }
 
   getName(): string {
@@ -58,7 +75,8 @@ export class S3Loader implements ConfigLoader {
    */
   async isAvailable(): Promise<boolean> {
     try {
-      await this._client.config.credentials();
+      const client = await this.getClient();
+      await client.config.credentials();
       return true;
     } catch {
       return false;
@@ -72,13 +90,16 @@ export class S3Loader implements ConfigLoader {
    * @throws ConfigurationLoadError if content cannot be parsed
    */
   async load(): Promise<Record<string, unknown>> {
+    const { GetObjectCommand } = await this.importSdk();
+
     try {
+      const client = await this.getClient();
       const command = new GetObjectCommand({
         Bucket: this._config.bucket,
         Key: this._config.key,
       });
 
-      const response = await this._client.send(command);
+      const response = await client.send(command);
 
       if (!response.Body) {
         return {};

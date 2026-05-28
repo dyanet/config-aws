@@ -25,7 +25,10 @@ npm install @dyanet/config-aws
 
 ### Peer Dependencies
 
-Install the AWS SDK clients you need:
+The AWS SDK clients are **optional**. Each AWS-backed loader imports its SDK lazily
+(only when the loader actually runs), so you only install the clients for the sources
+you use. An env-vars-only or `.env`-only setup needs no AWS SDK at all — importing this
+package never loads the AWS SDK.
 
 ```bash
 # For Secrets Manager
@@ -39,6 +42,22 @@ npm install @aws-sdk/client-s3
 
 # For schema validation
 npm install zod
+```
+
+If you use an AWS loader without its SDK installed, the loader throws a clear error
+telling you which package to install. Credentials are resolved through the AWS SDK's
+default Node provider chain (environment, shared config, SSO, container, and IMDS).
+
+### Importing individual loaders
+
+The package root (`@dyanet/config-aws`) re-exports everything. You can also import a
+single loader via its subpath, which keeps unused loaders (and their AWS SDKs) out of
+your bundle:
+
+```typescript
+import { EnvironmentLoader } from '@dyanet/config-aws/loaders/environment';
+import { SecretsManagerLoader } from '@dyanet/config-aws/loaders/secrets-manager';
+// also: /loaders/env-file, /loaders/s3, /loaders/ssm-parameter-store
 ```
 
 ## Quick Start

@@ -1,9 +1,9 @@
-import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+import type { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 
 import type { ConfigLoader } from '../interfaces/config-loader.interface';
 import type { SecretsManagerLoaderConfig } from '../interfaces/secrets-manager-loader.interface';
 import { AWSServiceError, ConfigurationLoadError } from '../errors';
+import { loadOptionalDependency } from '../utils/optional-dependency.util';
 
 /**
  * Loader that reads configuration from AWS Secrets Manager.
@@ -29,8 +29,8 @@ import { AWSServiceError, ConfigurationLoadError } from '../errors';
  * ```
  */
 export class SecretsManagerLoader implements ConfigLoader {
-  /** @internal */
-  protected readonly _client: SecretsManagerClient;
+  /** @internal Lazily created on first use so the AWS SDK stays optional. */
+  protected _client?: SecretsManagerClient;
   /** @internal */
   protected readonly _config: Required<SecretsManagerLoaderConfig>;
   /** @internal */
@@ -49,12 +49,31 @@ export class SecretsManagerLoader implements ConfigLoader {
         production: 'production',
       },
     };
+  }
 
-    // Initialize AWS Secrets Manager client
-    this._client = new SecretsManagerClient({
-      credentials: fromNodeProviderChain(),
-      region: this._config.region,
-    });
+  /**
+   * Lazily import the AWS Secrets Manager SDK. Imported on demand so the SDK is an
+   * optional peer dependency and is never loaded unless this loader runs.
+   * @internal
+   */
+  protected importSdk(): Promise<typeof import('@aws-sdk/client-secrets-manager')> {
+    return loadOptionalDependency(
+      '@aws-sdk/client-secrets-manager',
+      () => import('@aws-sdk/client-secrets-manager'),
+    );
+  }
+
+  /**
+   * Get (creating on first use) the Secrets Manager client. The client relies on the
+   * AWS SDK's default Node credential provider chain.
+   * @internal
+   */
+  protected async getClient(): Promise<SecretsManagerClient> {
+    if (!this._client) {
+      const { SecretsManagerClient } = await this.importSdk();
+      this._client = new SecretsManagerClient({ region: this._config.region });
+    }
+    return this._client;
   }
 
 
@@ -85,8 +104,9 @@ export class SecretsManagerLoader implements ConfigLoader {
     }
 
     try {
-      // Test AWS credentials by attempting to get caller identity
-      await this._client.config.credentials();
+      // Test AWS credentials by resolving the default provider chain
+      const client = await this.getClient();
+      await client.config.credentials();
       return true;
     } catch {
       return false;
@@ -106,10 +126,12 @@ export class SecretsManagerLoader implements ConfigLoader {
     }
 
     const secretName = this.buildSecretName();
+    const { GetSecretValueCommand } = await this.importSdk();
 
     try {
+      const client = await this.getClient();
       const command = new GetSecretValueCommand({ SecretId: secretName });
-      const response = await this._client.send(command);
+      const response = await client.send(command);
 
       if (!response.SecretString) {
         return {};
