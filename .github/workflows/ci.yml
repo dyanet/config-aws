@@ -32,8 +32,8 @@ jobs:
       - name: Lint all packages
         run: npm run lint
 
-      - name: Test all packages
-        run: npm run test
+      - name: Test all packages with coverage
+        run: npm run test:coverage --workspaces --if-present
 
       - name: Upload coverage (config-aws)
         if: matrix.node-version == '20.x'
@@ -44,23 +44,26 @@ jobs:
           files: packages/config-aws/coverage/lcov.info
           flags: config-aws
           name: config-aws
+          fail_ci_if_error: false
 
       - name: Upload coverage (nestjs-config-aws)
         if: matrix.node-version == '20.x'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: dyanet/nestjs-config-aws
+          slug: dyanet/config-aws
           files: packages/nestjs-config-aws/coverage/lcov.info
           flags: nestjs-config-aws
           name: nestjs-config-aws
+          fail_ci_if_error: false
 
       - name: Upload coverage (nextjs-config-aws)
         if: matrix.node-version == '20.x'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: dyanet/nextjs-config-aws
+          slug: dyanet/config-aws
           files: packages/nextjs-config-aws/coverage/lcov.info
           flags: nextjs-config-aws
           name: nextjs-config-aws
+          fail_ci_if_error: false

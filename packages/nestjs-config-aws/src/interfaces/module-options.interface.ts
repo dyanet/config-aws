@@ -35,18 +35,39 @@ export interface SSMConfig {
 }
 
 /**
+ * Simple, flat AWS options — the same ergonomic shape used by the Next.js adapter's
+ * `getConfig`. When provided, exactly the named sources are loaded (a `secretName`
+ * adds a Secrets Manager loader, an `ssmPrefix` adds an SSM loader); the granular
+ * `secretsManagerConfig` / `ssmConfig` options are not applied.
+ */
+export interface AwsOptions {
+  /** Secret name/path for AWS Secrets Manager. */
+  secretName?: string;
+  /** Parameter path prefix for AWS SSM Parameter Store. */
+  ssmPrefix?: string;
+  /** AWS region (defaults to the `AWS_REGION` env var, then `us-east-1`). */
+  region?: string;
+}
+
+/**
  * Options for configuring the NestJS AWS Configuration module.
  */
 export interface NestConfigAwsModuleOptions<T = any> {
-  /** Zod schema for configuration validation */
+  /** Zod schema for configuration validation. When omitted, values are returned as-is (no validation). */
   schema?: ZodType<T>;
-  
-  /** Configuration for AWS Secrets Manager integration */
+
+  /**
+   * Simple AWS options (`{ secretName, ssmPrefix, region }`) — mirrors the Next.js
+   * adapter. When set, takes precedence over `secretsManagerConfig` / `ssmConfig`.
+   */
+  aws?: AwsOptions;
+
+  /** Configuration for AWS Secrets Manager integration (advanced). */
   secretsManagerConfig?: SecretsManagerConfig;
-  
-  /** Configuration for AWS Systems Manager Parameter Store integration */
+
+  /** Configuration for AWS Systems Manager Parameter Store integration (advanced). */
   ssmConfig?: SSMConfig;
-  
+
   /** Prefix for environment variables (e.g., 'APP_') */
   envPrefix?: string;
   

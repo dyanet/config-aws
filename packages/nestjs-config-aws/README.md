@@ -10,7 +10,7 @@ NestJS adapter for AWS configuration management. A thin wrapper around [@dyanet/
 ## Features
 
 - **NestJS Integration** - Full dependency injection support with `ConfigModule` and `ConfigService`
-- **@nestjs/config Compatibility** - Seamless integration with the standard NestJS config module
+- **@nestjs/config Compatibility** - Drop the `awsConfigLoader` factory into `@nestjs/config`'s `load` array
 - **Type Safety** - Full TypeScript support with Zod schema validation
 - **AWS Services** - Load configuration from Secrets Manager, SSM Parameter Store, S3
 - **Thin Adapter** - Minimal overhead, delegates to `@dyanet/config-aws` for all heavy lifting
@@ -24,7 +24,14 @@ npm install @dyanet/nestjs-config-aws
 ### Peer Dependencies
 
 ```bash
-npm install @nestjs/common @nestjs/core @nestjs/config zod
+npm install @nestjs/common @nestjs/core zod
+```
+
+`@nestjs/config` is an **optional** peer dependency — install it only if you use the
+`awsConfigLoader` factory with `@nestjs/config`'s `ConfigModule`:
+
+```bash
+npm install @nestjs/config
 ```
 
 For AWS services, install the SDK clients you need:
@@ -60,16 +67,17 @@ const configSchema = z.object({
   imports: [
     ConfigModule.forRoot({
       schema: configSchema,
-      envPrefix: 'APP_',
-      secretsManagerConfig: {
-        enabled: true,
-        region: 'us-east-1',
-      },
+      // Simple flat AWS option — the same shape as the Next.js adapter's getConfig:
+      aws: { secretName: '/my-app/config', region: 'us-east-1' },
     }),
   ],
 })
 export class AppModule {}
 ```
+
+> `aws` is the recommended ergonomic shape. The verbose `secretsManagerConfig` /
+> `ssmConfig` options (with per-environment `paths`) remain available for advanced
+> control. When `schema` is omitted, values pass through unvalidated.
 
 ### Using ConfigService
 
@@ -226,66 +234,75 @@ export class MyService {
 
 ## @nestjs/config Integration
 
-Use `NestConfigAwsIntegrationModule` for seamless integration with `@nestjs/config`:
+To feed AWS-sourced values into the standard `@nestjs/config` `ConfigModule`, use the
+`awsConfigLoader` factory. It builds the loader chain, loads from environment variables,
+Secrets Manager and SSM, and returns a plain config object — exactly the `ConfigFactory`
+shape `@nestjs/config` expects in its `load` array. There is no extra module to import,
+and `@nestjs/config` stays an **optional** peer dependency.
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { ConfigModule as NestConfigModule } from '@nestjs/config';
-import { NestConfigAwsIntegrationModule } from '@dyanet/nestjs-config-aws';
+import { ConfigModule } from '@nestjs/config';
+import { awsConfigLoader } from '@dyanet/nestjs-config-aws';
 
 @Module({
   imports: [
-    NestConfigModule.forRoot(),
-    NestConfigAwsIntegrationModule.forRoot({
-      registerGlobally: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [
+        awsConfigLoader({
+          schema: myConfigSchema, // optional Zod schema
+          aws: { secretName: '/my-app/config', region: 'us-east-1' },
+        }),
+      ],
     }),
   ],
 })
 export class AppModule {}
 ```
 
-### Async Integration
+Then read values through the standard `@nestjs/config` `ConfigService` as usual.
+
+### Namespaced configuration
+
+Compose `awsConfigLoader` with `@nestjs/config`'s own `registerAs`:
 
 ```typescript
-import { NestConfigAwsIntegrationModule } from '@dyanet/nestjs-config-aws';
+import { ConfigModule, registerAs } from '@nestjs/config';
+import { awsConfigLoader } from '@dyanet/nestjs-config-aws';
 
-@Module({
-  imports: [
-    NestConfigAwsIntegrationModule.forRootAsync({
-      imports: [SomeModule],
-      inject: [SomeService],
-      useFactory: async (someService: SomeService) => ({
-        registerGlobally: true,
-        // Additional options from someService
-      }),
-    }),
+ConfigModule.forRoot({
+  load: [
+    registerAs('database', awsConfigLoader({ ssmConfig: { paths: { production: '/db' } } })),
   ],
-})
-export class AppModule {}
+});
 ```
 
-## Migration from Monolithic Package
+### Async / dependency-injected options
 
-If you're upgrading from an older version of `@dyanet/nestjs-config-aws` that included all functionality in one package:
+`awsConfigLoader` is a plain function, so build its options however you like — including
+inside `ConfigModule.forRootAsync`'s `useFactory` — and pass the resulting factory to `load`.
 
-### What Changed
+`awsConfigLoader` accepts: `schema`, `secretsManagerConfig`, `ssmConfig`, `envPrefix`,
+`precedence` (`'aws-first'` | `'local-first'` | custom; default `'aws-first'`), `validate`
+(default: on when a `schema` is given), and `enableLogging`.
 
-1. **Core functionality moved to `@dyanet/config-aws`** - All loaders, ConfigManager, and utilities are now in the core package
-2. **This package is now a thin adapter** - It re-exports everything from `@dyanet/config-aws` and adds NestJS-specific integration
-3. **Same API surface** - The public API remains the same for backward compatibility
+## Migrating from v1.x
 
-### Migration Steps
+v2.0.0 streamlines the `@nestjs/config` integration to the single `awsConfigLoader`
+factory shown above. Use the table below to map v1.x usage to v2.x.
 
-1. **No code changes required** - The package re-exports all types and classes from `@dyanet/config-aws`
-2. **Optional: Use core package directly** - For non-NestJS code, you can import from `@dyanet/config-aws` directly
+| v1.x | v2.x |
+| --- | --- |
+| `NestConfigAwsIntegrationModule.forRoot(opts)` alongside `ConfigModule` | `ConfigModule.forRoot({ load: [awsConfigLoader(opts)] })` |
+| `NestConfigAwsIntegrationModule.forRootAsync({ useFactory })` | build options in your own `useFactory` and pass `awsConfigLoader(opts)` to `load` |
+| `namespaces: ['db']` option | `registerAs('db', awsConfigLoader(opts))` |
+| `createAwsConfigFactory` / `createConfigModuleFactory` / `createEnhancedConfigOptions` | `awsConfigLoader(opts)` |
+| Configuration decorators / typed-config registries | `@nestjs/config`'s `ConfigService` / `ConfigType` |
 
-```typescript
-// Before (still works)
-import { EnvironmentLoader, ConfigManager } from '@dyanet/nestjs-config-aws';
-
-// After (optional, for non-NestJS code)
-import { EnvironmentLoader, ConfigManager } from '@dyanet/config-aws';
-```
+The standalone `ConfigModule.forRoot()` / `forRootAsync()` and the injectable
+`ConfigService` from this package are unchanged. All core re-exports (loaders,
+`ConfigManager`, errors, utilities) are unchanged.
 
 ## Advanced Usage
 

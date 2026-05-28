@@ -1,10 +1,9 @@
 import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
-import { ConfigLoader, EnvironmentLoader, SecretsManagerLoader, SSMParameterStoreLoader } from '@dyanet/config-aws';
 
 import { ConfigService } from './interfaces/config-service.interface';
 import { NestConfigAwsModuleOptions, NestConfigAwsModuleAsyncOptions } from './interfaces/module-options.interface';
-import { DefaultConfigSchema, defaultConfigSchema } from './interfaces/default-schema.interface';
 import { ConfigServiceImpl, ConfigServiceOptions } from './services/config.service';
+import { buildAwsLoaders } from './build-loaders';
 
 /**
  * Token for injecting module options
@@ -25,7 +24,7 @@ export class ConfigModule {
    * @param options - Configuration options for the module
    * @returns Dynamic module configuration
    */
-  static forRoot<T = DefaultConfigSchema>(
+  static forRoot<T = Record<string, unknown>>(
     options: NestConfigAwsModuleOptions<T> = {}
   ): DynamicModule {
     const configServiceProvider = this.createConfigServiceProvider(options);
@@ -51,7 +50,7 @@ export class ConfigModule {
    * @param options - Async configuration options with factory function
    * @returns Dynamic module configuration
    */
-  static forRootAsync<T = DefaultConfigSchema>(
+  static forRootAsync<T = Record<string, unknown>>(
     options: NestConfigAwsModuleAsyncOptions<T>
   ): DynamicModule {
     const asyncProviders = this.createAsyncProviders(options);
@@ -78,11 +77,12 @@ export class ConfigModule {
       provide: ConfigService,
       useFactory: async (): Promise<ConfigService<T>> => {
         // Create loaders based on configuration
-        const loaders = this.createLoaders(options);
+        const loaders = buildAwsLoaders(options);
 
-        // Create ConfigService options
+        // Create ConfigService options. No schema => values are returned as-is
+        // (ConfigManager only validates when a schema is provided).
         const serviceOptions: ConfigServiceOptions<T> = {
-          schema: options.schema || (defaultConfigSchema as any),
+          schema: options.schema,
           loaders,
           validateOnLoad: !options.ignoreValidationErrors,
           enableLogging: true,
@@ -124,11 +124,11 @@ export class ConfigModule {
       provide: ConfigService,
       useFactory: async (options: NestConfigAwsModuleOptions): Promise<ConfigService> => {
         // Create loaders based on configuration
-        const loaders = this.createLoaders(options);
+        const loaders = buildAwsLoaders(options);
 
-        // Create ConfigService options
+        // Create ConfigService options. No schema => values are returned as-is.
         const serviceOptions: ConfigServiceOptions = {
-          schema: options.schema || defaultConfigSchema,
+          schema: options.schema,
           loaders,
           validateOnLoad: !options.ignoreValidationErrors,
           enableLogging: true,
@@ -146,49 +146,5 @@ export class ConfigModule {
       },
       inject: [NEST_CONFIG_AWS_OPTIONS],
     };
-  }
-
-  /**
-   * Create configuration loaders based on module options.
-   * Uses loaders from @dyanet/config-aws core package.
-   */
-  private static createLoaders<T>(options: NestConfigAwsModuleOptions<T>): ConfigLoader[] {
-    const loaders: ConfigLoader[] = [];
-
-    // Always add environment loader first (lowest precedence)
-    loaders.push(new EnvironmentLoader({ prefix: options.envPrefix }));
-
-    // Add Secrets Manager loader if enabled
-    if (options.secretsManagerConfig?.enabled !== false) {
-      const secretsConfig = {
-        region: options.secretsManagerConfig?.region,
-        // Map paths to environment mapping if provided
-        environmentMapping: options.secretsManagerConfig?.paths ? {
-          development: options.secretsManagerConfig.paths.development || 'dev',
-          test: options.secretsManagerConfig.paths.test || 'test',
-          production: options.secretsManagerConfig.paths.production || 'production',
-        } : undefined,
-      };
-
-      loaders.push(new SecretsManagerLoader(secretsConfig));
-    }
-
-    // Add SSM Parameter Store loader if enabled
-    if (options.ssmConfig?.enabled !== false) {
-      const ssmConfig = {
-        region: options.ssmConfig?.region,
-        withDecryption: options.ssmConfig?.decrypt,
-        // Map paths to environment mapping if provided
-        environmentMapping: options.ssmConfig?.paths ? {
-          development: options.ssmConfig.paths.development || 'dev',
-          test: options.ssmConfig.paths.test || 'test',
-          production: options.ssmConfig.paths.production || 'production',
-        } : undefined,
-      };
-
-      loaders.push(new SSMParameterStoreLoader(ssmConfig));
-    }
-
-    return loaders;
   }
 }

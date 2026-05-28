@@ -1,9 +1,9 @@
-import { GetParametersByPathCommand, SSMClient } from '@aws-sdk/client-ssm';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+import type { SSMClient } from '@aws-sdk/client-ssm';
 
 import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
 import type { SSMParameterStoreLoaderConfig } from '../interfaces/ssm-parameter-store-loader.interface.js';
 import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
+import { loadOptionalDependency } from '../utils/optional-dependency.util.js';
 
 /**
  * Loader that reads configuration from AWS SSM Parameter Store.
@@ -29,8 +29,8 @@ import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
  * ```
  */
 export class SSMParameterStoreLoader implements ConfigLoader {
-  /** @internal */
-  protected readonly _client: SSMClient;
+  /** @internal Lazily created on first use so the AWS SDK stays optional. */
+  protected _client?: SSMClient;
   /** @internal */
   protected readonly _config: Required<SSMParameterStoreLoaderConfig>;
   /** @internal */
@@ -50,12 +50,28 @@ export class SSMParameterStoreLoader implements ConfigLoader {
       },
       withDecryption: config.withDecryption ?? true,
     };
+  }
 
-    // Initialize AWS SSM client
-    this._client = new SSMClient({
-      credentials: fromNodeProviderChain(),
-      region: this._config.region,
-    });
+  /**
+   * Lazily import the AWS SSM SDK. Imported on demand so the SDK is an optional
+   * peer dependency and is never loaded unless this loader runs.
+   * @internal
+   */
+  protected importSdk(): Promise<typeof import('@aws-sdk/client-ssm')> {
+    return loadOptionalDependency('@aws-sdk/client-ssm', () => import('@aws-sdk/client-ssm'));
+  }
+
+  /**
+   * Get (creating on first use) the SSM client. The client relies on the AWS SDK's
+   * default Node credential provider chain.
+   * @internal
+   */
+  protected async getClient(): Promise<SSMClient> {
+    if (!this._client) {
+      const { SSMClient } = await this.importSdk();
+      this._client = new SSMClient({ region: this._config.region });
+    }
+    return this._client;
   }
 
 
@@ -84,8 +100,9 @@ export class SSMParameterStoreLoader implements ConfigLoader {
     }
 
     try {
-      // Test AWS credentials by attempting to get caller identity
-      await this._client.config.credentials();
+      // Test AWS credentials by resolving the default provider chain
+      const client = await this.getClient();
+      await client.config.credentials();
       return true;
     } catch {
       return false;
@@ -106,6 +123,8 @@ export class SSMParameterStoreLoader implements ConfigLoader {
     }
 
     const parameterPath = this.buildParameterPath();
+    const { GetParametersByPathCommand } = await this.importSdk();
+    const client = await this.getClient();
     const result: Record<string, string> = {};
     let nextToken: string | undefined;
 
@@ -118,7 +137,7 @@ export class SSMParameterStoreLoader implements ConfigLoader {
           NextToken: nextToken,
         });
 
-        const response = await this._client.send(command);
+        const response = await client.send(command);
 
         if (!response.Parameters) {
           // No parameters found - this is not necessarily an error

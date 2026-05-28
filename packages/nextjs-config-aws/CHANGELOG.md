@@ -5,6 +5,12 @@ All notable changes to `@dyanet/nextjs-config-aws` will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-27
+
+### Changed
+
+- **Widened peer dependency ranges** to support a much broader range of apps: `next` is now `>=14.0.0` (was `^16.0.0`) and `react` is now `>=18.0.0` (was `^19.0.0`). The adapter only uses stable App Router / React APIs (`React.createElement`, server-rendered `<script>`), so older majors are supported. The package is still developed and tested against the latest Next.js and React.
+
 ## [1.0.0] - 2024-12-20
 
 ### Added

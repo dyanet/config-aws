@@ -5,6 +5,20 @@ All notable changes to `@dyanet/config-aws` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-27
+
+### ✨ Features
+
+- **AWS SDK clients are now truly optional.** Each AWS-backed loader (`SecretsManagerLoader`, `SSMParameterStoreLoader`, `S3Loader`) imports its SDK lazily on first use, so consumers who do not use those loaders need not install the SDK at all. Importing the package no longer touches the AWS SDK at module load time.
+- **Per-loader subpath exports.** Each loader is available as its own entry point: `@dyanet/config-aws/loaders/environment`, `/env-file`, `/s3`, `/secrets-manager`, `/ssm-parameter-store`. Importing a single loader does not reference the others in your bundle.
+- **Native ESM resolution.** The ESM build (`dist/esm`) now resolves correctly under Node's native ESM loader: relative imports include `.js` extensions and explicit `/index.js` for directory imports, and `dist/esm/package.json` / `dist/cjs/package.json` declare the module type. CommonJS resolution is unchanged.
+- **Clear missing-dependency errors.** When an optional AWS SDK client is not installed, the loader throws a `ConfigurationLoadError` with the exact `npm install …` command needed.
+
+### 🔧 Internal
+
+- Credentials are resolved through the AWS SDK's default Node provider chain (environment, shared config/profile, SSO, web identity, ECS/EKS container, EC2 IMDS). No explicit credential package is required.
+- LICENSE file is now included in the published tarball.
+
 ## [1.0.1] - 2025-12-20
 
 ### 🐞 Bug Fixes

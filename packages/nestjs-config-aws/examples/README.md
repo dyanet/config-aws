@@ -1,6 +1,10 @@
-# nestjs-config-aws Examples
+# @dyanet/nestjs-config-aws Examples
 
-This directory contains comprehensive examples demonstrating different usage patterns and features of the nestjs-config-aws module.
+This directory contains examples demonstrating different usage patterns and features of the `@dyanet/nestjs-config-aws` package.
+
+> **Using `@nestjs/config`?** Drop the `awsConfigLoader` factory into
+> `@nestjs/config`'s `load` array — see the
+> [package README](../README.md#nestjsconfig-integration).
 
 ## Available Examples
 
@@ -39,20 +43,7 @@ This directory contains comprehensive examples demonstrating different usage pat
 
 **Use this when**: You're building AWS-native applications that need comprehensive AWS service integration.
 
-### 4. [@nestjs/config Integration](./nestjs-config-integration/)
-**Seamless integration with standard @nestjs/config**
-
-- ✅ Standard @nestjs/config compatibility
-- ✅ AWS-sourced configuration through familiar patterns
-- ✅ Precedence rule handling (aws-first, local-first, merge)
-- ✅ Namespaced configuration with registerAs
-- ✅ Validation integration (Joi and class-validator)
-- ✅ Migration examples from existing setups
-- ✅ Async configuration support
-
-**Use this when**: You want to add AWS capabilities to existing @nestjs/config setups or prefer standard NestJS patterns.
-
-### 5. [Docker Compose Setup](./docker-compose/)
+### 4. [Docker Compose Setup](./docker-compose/)
 **Complete local development environment**
 
 - ✅ LocalStack for AWS services emulation
@@ -98,13 +89,8 @@ npm run start:dev
 ```
 
 #### Using @nestjs/config already?
-Try the **[@nestjs/config Integration](./nestjs-config-integration/)** example:
-```bash
-cd nestjs-config-integration
-npm install
-cp .env.example .env
-npm run start:dev
-```
+Drop the `awsConfigLoader` factory into `@nestjs/config`'s `load` array — see the
+[package README](../README.md#nestjsconfig-integration). No separate example app is needed.
 
 #### Want a complete local environment?
 Use the **[Docker Compose](./docker-compose/)** setup:
@@ -116,16 +102,15 @@ docker-compose up -d
 
 ## Feature Comparison
 
-| Feature | Basic Usage | Custom Schema | AWS Integration | @nestjs/config Integration | Docker Compose |
-|---------|-------------|---------------|-----------------|----------------------------|----------------|
-| **Complexity** | Simple | Medium | Advanced | Medium | Complete |
-| **Setup Time** | 5 minutes | 15 minutes | 30 minutes | 10 minutes | 10 minutes |
-| **Type Safety** | Basic | Full | Full | Full | Full |
-| **AWS Services** | None | None | Comprehensive | Basic | Emulated |
-| **Validation** | Default | Custom Zod | AWS-focused | Joi + class-validator | All patterns |
-| **@nestjs/config Compatible** | No | No | No | Yes | Yes |
-| **Production Ready** | Basic | Yes | Yes | Yes | Development |
-| **Learning Curve** | Easy | Medium | Advanced | Easy | Easy |
+| Feature | Basic Usage | Custom Schema | AWS Integration | Docker Compose |
+|---------|-------------|---------------|-----------------|----------------|
+| **Complexity** | Simple | Medium | Advanced | Complete |
+| **Setup Time** | 5 minutes | 15 minutes | 30 minutes | 10 minutes |
+| **Type Safety** | Basic | Full | Full | Full |
+| **AWS Services** | None | None | Comprehensive | Emulated |
+| **Validation** | Default | Custom Zod | AWS-focused | All patterns |
+| **Production Ready** | Basic | Yes | Yes | Development |
+| **Learning Curve** | Easy | Medium | Advanced | Easy |
 
 ## Common Use Cases
 

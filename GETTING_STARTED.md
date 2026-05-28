@@ -1,308 +1,229 @@
-# Getting Started with nestjs-config-aws
+# Getting Started with config-aws
 
-Welcome to nestjs-config-aws! This guide will help you get up and running quickly with AWS-integrated configuration management for your NestJS applications.
+This guide gets you up and running with `config-aws` — type-safe configuration backed by
+environment variables, `.env` files, and AWS (Secrets Manager, SSM Parameter Store, S3).
 
-## 🚀 Quick Start
+Pick the package that matches your stack:
 
-### Choose Your Integration Approach
+- **Plain Node.js / any framework** → [`@dyanet/config-aws`](#core-dyanetconfig-aws)
+- **NestJS** → [`@dyanet/nestjs-config-aws`](#nestjs-dyanetnestjs-config-aws)
+- **Next.js** → [`@dyanet/nextjs-config-aws`](#nextjs-dyanetnextjs-config-aws)
 
-nestjs-config-aws offers two ways to integrate with your NestJS application:
+> **AWS SDK clients are optional.** The AWS-backed loaders import their SDK lazily, so you
+> only install the clients you use (`@aws-sdk/client-secrets-manager`, `@aws-sdk/client-ssm`,
+> `@aws-sdk/client-s3`). An env-only or `.env`-only setup needs no AWS SDK. Credentials are
+> resolved through the AWS SDK's default Node provider chain.
 
-1. **Standalone Usage** - Use nestjs-config-aws as your primary configuration module
-2. **@nestjs/config Integration** - Add AWS capabilities to existing @nestjs/config setups
+## Core (`@dyanet/config-aws`)
 
-## Option 1: Standalone Usage
-
-Perfect for new projects or when you want a complete configuration solution.
-
-### Installation
+### Install
 
 ```bash
-npm install nestjs-config-aws
-npm install @nestjs/common @nestjs/core zod  # Peer dependencies
+npm install @dyanet/config-aws zod
+npm install @aws-sdk/client-secrets-manager   # only if you use Secrets Manager
 ```
 
-### Basic Setup
+### Use
+
+```typescript
+import { ConfigManager, EnvironmentLoader, SecretsManagerLoader } from '@dyanet/config-aws';
+import { z } from 'zod';
+
+const schema = z.object({
+  PORT: z.coerce.number().default(3000),
+  DATABASE_URL: z.string(),
+});
+
+const config = new ConfigManager({
+  loaders: [
+    new EnvironmentLoader(),
+    new SecretsManagerLoader({ secretName: '/my-app/config' }),
+  ],
+  schema,
+  precedence: 'aws-first',
+});
+
+await config.load();
+config.get('DATABASE_URL');
+```
+
+## NestJS (`@dyanet/nestjs-config-aws`)
+
+There are two ways to use it. Both read from environment variables, Secrets Manager and SSM.
+
+### Install
+
+```bash
+npm install @dyanet/nestjs-config-aws @nestjs/common @nestjs/core zod
+```
+
+### Option 1 — Injectable `ConfigService`
+
+Use this package's own module and service.
 
 ```typescript
 // app.module.ts
 import { Module } from '@nestjs/common';
-import { ConfigModule } from 'nestjs-config-aws';
+import { ConfigModule } from '@dyanet/nestjs-config-aws';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      // Optional: Enable AWS integration
-      secretsManagerConfig: {
-        enabled: process.env.NODE_ENV === 'production',
-      },
+      secretsManagerConfig: { enabled: process.env.APP_ENV !== 'local' },
     }),
   ],
 })
 export class AppModule {}
 ```
 
-### Service Usage
-
 ```typescript
 // app.service.ts
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from 'nestjs-config-aws';
+import { ConfigService } from '@dyanet/nestjs-config-aws';
 
 @Injectable()
 export class AppService {
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly config: ConfigService) {}
 
-  getConfig() {
-    return {
-      port: this.configService.get('PORT', 3000),
-      databaseUrl: this.configService.get('DATABASE_URL'),
-      // Values can come from environment variables or AWS
-    };
+  getDatabaseUrl(): string {
+    return this.config.get('DATABASE_URL'); // may come from AWS
   }
 }
 ```
 
-## Option 2: @nestjs/config Integration (Recommended)
+### Option 2 — `@nestjs/config` with `awsConfigLoader`
 
-Perfect for existing projects using @nestjs/config or when you prefer standard NestJS patterns.
-
-### Installation
+If you already use `@nestjs/config` (an **optional** peer dependency), drop the
+`awsConfigLoader` factory into its `load` array and keep reading values through the standard
+`ConfigService`.
 
 ```bash
-npm install nestjs-config-aws @nestjs/config
-npm install @nestjs/common @nestjs/core zod  # Peer dependencies
+npm install @nestjs/config
 ```
-
-### Integration Setup
 
 ```typescript
 // app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { NestConfigAwsIntegrationModule } from 'nestjs-config-aws';
+import { awsConfigLoader } from '@dyanet/nestjs-config-aws';
 
 @Module({
   imports: [
-    // Step 1: AWS Integration (must be first)
-    NestConfigAwsIntegrationModule.forRoot({
-      secretsManagerConfig: {
-        enabled: process.env.NODE_ENV !== 'local',
-        paths: {
-          development: '/myapp/dev/secrets',
-          production: '/myapp/prod/secrets',
-        },
-      },
-      precedence: 'aws-first', // AWS values override local values
-    }),
-    
-    // Step 2: Standard @nestjs/config (must be after)
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [
+        awsConfigLoader({
+          secretsManagerConfig: {
+            enabled: process.env.APP_ENV !== 'local',
+            paths: { development: '/my-app/dev/secrets', production: '/my-app/prod/secrets' },
+          },
+          precedence: 'aws-first',
+        }),
+      ],
     }),
   ],
 })
 export class AppModule {}
 ```
 
-### Service Usage
-
 ```typescript
-// app.service.ts
+// app.service.ts — standard @nestjs/config, no special imports
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config'; // Standard @nestjs/config import
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AppService {
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly config: ConfigService) {}
 
-  getConfig() {
-    return {
-      port: this.configService.get('PORT', 3000),
-      databaseUrl: this.configService.get('DATABASE_URL'), // Can come from AWS
-      // No changes needed from standard @nestjs/config usage!
-    };
+  getDatabaseUrl(): string {
+    return this.config.get<string>('DATABASE_URL'); // may come from AWS
   }
 }
 ```
 
-## 🔧 Environment Configuration
+For namespaced config, compose with `@nestjs/config`'s own `registerAs`:
 
-### Environment Variables
+```typescript
+import { registerAs } from '@nestjs/config';
 
-Set these environment variables to control behavior:
+ConfigModule.forRoot({
+  load: [registerAs('database', awsConfigLoader({ ssmConfig: { paths: { production: '/db' } } }))],
+});
+```
+
+## Next.js (`@dyanet/nextjs-config-aws`)
+
+### Install
 
 ```bash
-# Application environment (controls AWS integration)
-APP_ENV=local          # Disable AWS, use local only
-APP_ENV=development    # Enable AWS with dev resources
-APP_ENV=production     # Enable AWS with prod resources
+npm install @dyanet/nextjs-config-aws
+```
 
-# AWS Configuration (optional for local development)
+### Server-side config
+
+```typescript
+import { getConfig } from '@dyanet/nextjs-config-aws';
+import { z } from 'zod';
+
+const config = await getConfig({
+  schema: z.object({ DATABASE_URL: z.string() }),
+  aws: { secretName: '/my-app/config' },
+});
+```
+
+### Runtime client variables
+
+```tsx
+// layout.tsx (server component)
+import { PublicEnvScript } from '@dyanet/nextjs-config-aws';
+<PublicEnvScript publicVars={['API_URL', 'APP_NAME']} />;
+
+// client component
+'use client';
+import { env } from '@dyanet/nextjs-config-aws';
+const apiUrl = env('API_URL');
+```
+
+## Environment configuration
+
+```bash
+APP_ENV=local          # env vars + .env only; AWS loaders skip themselves
+APP_ENV=development     # + AWS Secrets Manager / SSM with dev paths
+APP_ENV=production      # + AWS Secrets Manager / SSM with prod paths
+
 AWS_REGION=us-east-1
-AWS_PROFILE=myprofile  # For local development
-
-# Your application configuration
-PORT=3000
-DATABASE_URL=postgresql://localhost:5432/myapp
+AWS_PROFILE=myprofile   # for local development
 ```
 
-### AWS Resources Setup (Optional)
+### Configuration precedence
 
-For AWS integration, set up your secrets and parameters:
+Values are merged across sources; the strategy decides who wins on conflicts:
 
-#### AWS Secrets Manager
+- **`aws-first`** (default) — AWS sources override local ones.
+- **`local-first`** — local sources (env, `.env`) override AWS.
+- **Custom** — pass an explicit `LoaderPrecedence[]` order to the core `ConfigManager`.
+
+## AWS resources (optional)
 
 ```bash
-# Create a secret for your application
+# Secrets Manager — JSON keys become config keys
 aws secretsmanager create-secret \
-  --name "/myapp/production/secrets" \
-  --description "Production secrets for myapp" \
+  --name "/prod/my-app/config" \
   --secret-string '{"DATABASE_PASSWORD":"secure-password","API_KEY":"prod-api-key"}'
+
+# SSM Parameter Store — nested paths become UPPER_SNAKE_CASE keys
+aws ssm put-parameter --name "/prod/my-app/DATABASE_HOST" --value "db.example.com" --type String
 ```
 
-#### AWS SSM Parameter Store
+## Next steps
 
-```bash
-# Create parameters for your application
-aws ssm put-parameter \
-  --name "/myapp/production/DATABASE_HOST" \
-  --value "prod-db.example.com" \
-  --type "String"
+- **Examples**: [`packages/nestjs-config-aws/examples/`](packages/nestjs-config-aws/examples/)
+- **Core API**: [`packages/config-aws/README.md`](packages/config-aws/README.md)
+- **NestJS API**: [`packages/nestjs-config-aws/README.md`](packages/nestjs-config-aws/README.md)
+- **Next.js API**: [`packages/nextjs-config-aws/README.md`](packages/nextjs-config-aws/README.md)
+- **Troubleshooting**: see the [main README](README.md#troubleshooting)
 
-aws ssm put-parameter \
-  --name "/myapp/production/DATABASE_PORT" \
-  --value "5432" \
-  --type "String"
-```
-
-## 🏃‍♂️ Running Your Application
-
-### Local Development
-
-```bash
-# Use local configuration only
-APP_ENV=local npm run start:dev
-```
-
-### With AWS Integration
-
-```bash
-# Use AWS resources for development
-APP_ENV=development npm run start:dev
-
-# Use AWS resources for production
-APP_ENV=production npm run start:prod
-```
-
-## 📋 Configuration Precedence
-
-Understanding how configuration values are resolved:
-
-### aws-first (Default)
-1. AWS Secrets Manager
-2. AWS SSM Parameter Store
-3. Environment Variables
-4. Default Values
-
-### local-first
-1. Environment Variables
-2. AWS Secrets Manager
-3. AWS SSM Parameter Store
-4. Default Values
-
-### merge
-Intelligent merging based on value types and contexts.
-
-## 🔍 Debugging Configuration
-
-Enable debug logging to see how configuration is loaded:
-
-```bash
-DEBUG=nestjs-config-aws* npm start
-```
-
-Check configuration endpoints (if available):
-
-```bash
-curl http://localhost:3000/config
-curl http://localhost:3000/health
-```
-
-## 📚 Next Steps
-
-### Explore Examples
-
-Check out the comprehensive examples in the `examples/` directory:
-
-- **[basic-usage/](examples/basic-usage/)** - Simple standalone setup
-- **[nestjs-config-integration/](examples/nestjs-config-integration/)** - @nestjs/config integration
-- **[custom-schema/](examples/custom-schema/)** - Advanced validation with Zod
-- **[aws-integration/](examples/aws-integration/)** - Production AWS setup
-- **[docker-compose/](examples/docker-compose/)** - Local development environment
-
-### Learn More
-
-- **[README.md](README.md)** - Complete documentation
-- **[API Reference](README.md#api-reference)** - Detailed API documentation
-- **[Troubleshooting](README.md#troubleshooting)** - Common issues and solutions
-- **[Integration Guide](examples/nestjs-config-integration/INTEGRATION_GUIDE.md)** - Comprehensive integration guide
-
-## 🆘 Need Help?
+## Need help?
 
 - **Issues**: [GitHub Issues](https://github.com/dyanet/config-aws/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/dyanet/config-aws/discussions)
-- **Documentation**: [README.md](README.md)
-
-## 🎯 Common Use Cases
-
-### Simple Web Application
-
-```typescript
-// Just need basic configuration with optional AWS secrets
-NestConfigAwsIntegrationModule.forRoot({
-  secretsManagerConfig: {
-    enabled: process.env.NODE_ENV === 'production',
-    paths: { production: '/myapp/prod/secrets' }
-  }
-})
-```
-
-### Microservices Architecture
-
-```typescript
-// Different services, different AWS resource paths
-NestConfigAwsIntegrationModule.forRoot({
-  secretsManagerConfig: {
-    enabled: true,
-    paths: {
-      development: `/myapp/${process.env.SERVICE_NAME}/dev/secrets`,
-      production: `/myapp/${process.env.SERVICE_NAME}/prod/secrets`
-    }
-  }
-})
-```
-
-### Multi-Environment Deployment
-
-```typescript
-// Dynamic configuration based on deployment stage
-NestConfigAwsIntegrationModule.forRootAsync({
-  useFactory: async () => {
-    const stage = process.env.DEPLOYMENT_STAGE || 'dev';
-    return {
-      secretsManagerConfig: {
-        enabled: stage !== 'local',
-        paths: { [stage]: `/myapp/${stage}/secrets` }
-      },
-      precedence: stage === 'prod' ? 'aws-first' : 'local-first'
-    };
-  }
-})
-```
-
----
-
-**Ready to get started?** Choose your integration approach above and follow the setup instructions. You'll have AWS-integrated configuration running in minutes!
-
-For more advanced usage patterns, check out our [comprehensive examples](examples/) and [detailed documentation](README.md).
