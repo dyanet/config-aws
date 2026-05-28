@@ -1,5 +1,5 @@
-import type { ConfigLoader } from '../interfaces/config-loader.interface';
-import type { EnvironmentLoaderConfig } from '../interfaces/environment-loader.interface';
+import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
+import type { EnvironmentLoaderConfig } from '../interfaces/environment-loader.interface.js';
 
 /**
  * Loader that reads configuration from process.env.

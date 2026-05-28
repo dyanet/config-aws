@@ -1,9 +1,9 @@
 import type { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 
-import type { ConfigLoader } from '../interfaces/config-loader.interface';
-import type { SecretsManagerLoaderConfig } from '../interfaces/secrets-manager-loader.interface';
-import { AWSServiceError, ConfigurationLoadError } from '../errors';
-import { loadOptionalDependency } from '../utils/optional-dependency.util';
+import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
+import type { SecretsManagerLoaderConfig } from '../interfaces/secrets-manager-loader.interface.js';
+import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
+import { loadOptionalDependency } from '../utils/optional-dependency.util.js';
 
 /**
  * Loader that reads configuration from AWS Secrets Manager.

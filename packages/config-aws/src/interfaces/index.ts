@@ -1,4 +1,4 @@
-export type { ConfigLoader, ConfigLoaderResult } from './config-loader.interface';
+export type { ConfigLoader, ConfigLoaderResult } from './config-loader.interface.js';
 export type {
   ConfigManagerOptions,
   LoaderPrecedence,
@@ -7,9 +7,9 @@ export type {
   ConfigLoadResult,
   ConfigSourceInfo,
   Logger,
-} from './config-manager.interface';
-export type { EnvironmentLoaderConfig } from './environment-loader.interface';
-export type { EnvFileLoaderConfig } from './env-file-loader.interface';
-export type { S3LoaderConfig } from './s3-loader.interface';
-export type { SecretsManagerLoaderConfig } from './secrets-manager-loader.interface';
-export type { SSMParameterStoreLoaderConfig } from './ssm-parameter-store-loader.interface';
+} from './config-manager.interface.js';
+export type { EnvironmentLoaderConfig } from './environment-loader.interface.js';
+export type { EnvFileLoaderConfig } from './env-file-loader.interface.js';
+export type { S3LoaderConfig } from './s3-loader.interface.js';
+export type { SecretsManagerLoaderConfig } from './secrets-manager-loader.interface.js';
+export type { SSMParameterStoreLoaderConfig } from './ssm-parameter-store-loader.interface.js';

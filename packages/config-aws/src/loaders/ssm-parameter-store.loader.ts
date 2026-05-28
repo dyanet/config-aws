@@ -1,9 +1,9 @@
 import type { SSMClient } from '@aws-sdk/client-ssm';
 
-import type { ConfigLoader } from '../interfaces/config-loader.interface';
-import type { SSMParameterStoreLoaderConfig } from '../interfaces/ssm-parameter-store-loader.interface';
-import { AWSServiceError, ConfigurationLoadError } from '../errors';
-import { loadOptionalDependency } from '../utils/optional-dependency.util';
+import type { ConfigLoader } from '../interfaces/config-loader.interface.js';
+import type { SSMParameterStoreLoaderConfig } from '../interfaces/ssm-parameter-store-loader.interface.js';
+import { AWSServiceError, ConfigurationLoadError } from '../errors/index.js';
+import { loadOptionalDependency } from '../utils/optional-dependency.util.js';
 
 /**
  * Loader that reads configuration from AWS SSM Parameter Store.

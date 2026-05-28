@@ -1,5 +1,5 @@
 import type { ZodType } from 'zod';
-import type { ConfigLoader } from './config-loader.interface';
+import type { ConfigLoader } from './config-loader.interface.js';
 
 /**
  * Logger interface for ConfigManager
