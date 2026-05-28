@@ -87,6 +87,8 @@ jobs:
       - name: Publish with provenance (OIDC)
         working-directory: packages/config-aws
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-nestjs-config-aws:
     needs: [determine-packages, publish-config-aws]
@@ -116,6 +118,8 @@ jobs:
       - name: Publish with provenance (OIDC)
         working-directory: packages/nestjs-config-aws
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-nextjs-config-aws:
     needs: [determine-packages, publish-config-aws]
@@ -145,3 +149,5 @@ jobs:
       - name: Publish with provenance (OIDC)
         working-directory: packages/nextjs-config-aws
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
