@@ -94,6 +94,12 @@ jobs:
       - name: Test package
         run: npm run test --workspace=@dyanet/config-aws
 
+      # npm Trusted Publishing (OIDC, via id-token: write) needs npm >= 11.5.1.
+      # With it configured on npmjs.com for this package + publish.yml, no
+      # NPM_TOKEN is needed; the secret remains a fallback.
+      - name: Ensure npm supports trusted publishing
+        run: npx -y semver -r ">=11.5.1" "$(npm -v)" >/dev/null || npm install -g npm@^11.5.1
+
       - name: Publish with provenance (OIDC)
         working-directory: packages/config-aws
         run: npm publish --provenance --access public
@@ -128,6 +134,12 @@ jobs:
       - name: Test package
         run: npm run test --workspace=@dyanet/nestjs-config-aws
 
+      # npm Trusted Publishing (OIDC, via id-token: write) needs npm >= 11.5.1.
+      # With it configured on npmjs.com for this package + publish.yml, no
+      # NPM_TOKEN is needed; the secret remains a fallback.
+      - name: Ensure npm supports trusted publishing
+        run: npx -y semver -r ">=11.5.1" "$(npm -v)" >/dev/null || npm install -g npm@^11.5.1
+
       - name: Publish with provenance (OIDC)
         working-directory: packages/nestjs-config-aws
         run: npm publish --provenance --access public
@@ -161,6 +173,12 @@ jobs:
 
       - name: Test package
         run: npm run test --workspace=@dyanet/nextjs-config-aws
+
+      # npm Trusted Publishing (OIDC, via id-token: write) needs npm >= 11.5.1.
+      # With it configured on npmjs.com for this package + publish.yml, no
+      # NPM_TOKEN is needed; the secret remains a fallback.
+      - name: Ensure npm supports trusted publishing
+        run: npx -y semver -r ">=11.5.1" "$(npm -v)" >/dev/null || npm install -g npm@^11.5.1
 
       - name: Publish with provenance (OIDC)
         working-directory: packages/nextjs-config-aws
