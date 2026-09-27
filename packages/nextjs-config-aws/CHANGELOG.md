@@ -5,6 +5,21 @@ All notable changes to `@dyanet/nextjs-config-aws` will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-27
+
+### ✨ Features
+
+- **`@dyanet/nextjs-config-aws/client` subpath export** with the browser-only helpers (`env`, `envFrom`, `getAllEnv`, `hasEnv`). Import from it in `'use client'` components so the browser bundle doesn't include the server-side loaders.
+
+### 🐞 Bug Fixes
+
+- **Importing the package in a Server Component no longer crashes the build** with `createContext is not a function` while collecting page data. The main entry imported `getConfig` through a barrel that also evaluated `config-provider`, which calls `React.createContext()` at module load, and `createContext` doesn't exist under React Server Components. The main entry now imports `getConfig` directly.
+- Requires `@dyanet/config-aws` ^1.1.1, which stops bundlers from failing on AWS SDK clients the app didn't install.
+
+### 🔧 Internal
+
+- CI now packs the packages and runs `next build` on `examples/nextjs-basic` against Next.js 14 and 16 with no AWS SDK installed.
+
 ## [1.1.0] - 2026-05-27
 
 ### Changed

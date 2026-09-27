@@ -8,6 +8,10 @@ import { ConfigurationLoadError } from '../errors';
  * consumers that never use AWS-backed loaders do not need them installed, and the
  * SDKs are never loaded at module import time — only on first use of the loader.
  *
+ * Callers mark the `import()` with `webpackIgnore` / `turbopackIgnore` so that
+ * bundlers (Next.js, webpack, Turbopack) leave it as a native runtime import
+ * instead of trying to resolve — and failing on — an SDK the app didn't install.
+ *
  * @param packageName The npm package name, used for the install hint and error message.
  * @param importer A thunk performing the dynamic `import()` with a literal specifier.
  * @returns The imported module namespace.
@@ -17,7 +21,7 @@ import { ConfigurationLoadError } from '../errors';
  * ```typescript
  * const { S3Client } = await loadOptionalDependency(
  *   '@aws-sdk/client-s3',
- *   () => import('@aws-sdk/client-s3'),
+ *   () => import('@aws-sdk/client-s3'), // plus the ignore comments, see above
  * );
  * ```
  */

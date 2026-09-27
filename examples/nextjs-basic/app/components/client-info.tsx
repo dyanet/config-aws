@@ -1,6 +1,6 @@
 'use client';
 
-import { env } from '@dyanet/nextjs-config-aws';
+import { env } from '@dyanet/nextjs-config-aws/client';
 
 export function ClientInfo() {
   // `env()` reads from the window object populated by <PublicEnvScript /> in layout.tsx.

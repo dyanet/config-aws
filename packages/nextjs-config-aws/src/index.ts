@@ -50,7 +50,12 @@
 export { ConfigurationError, ValidationError } from '@dyanet/config-aws';
 
 // Server-side configuration loading
-export { getConfig, type NextConfigOptions } from './server';
+// Imported from get-config directly rather than './server': that barrel also
+// re-exports config-provider, which calls React.createContext() at module load,
+// and createContext does not exist under React Server Components (the
+// 'react-server' condition), so evaluating it crashed every server component
+// that imported this package.
+export { getConfig, type NextConfigOptions } from './server/get-config';
 
 // Component for runtime environment variables
 export { PublicEnvScript, type PublicEnvScriptProps } from './components';

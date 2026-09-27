@@ -1,9 +1,19 @@
 name: Publish Packages
 
+# Publishes any package whose package.json version is newer than what npm
+# has (see determine-packages). Runs on v* tags and on every push to main, so
+# merging a PR that bumps a package's version is what releases it; pushes that
+# don't bump anything skip every publish job.
 on:
   push:
+    branches: [main]
     tags:
       - 'v*'
+
+# Never run two publishes at once, and never cancel one mid-publish.
+concurrency:
+  group: publish
+  cancel-in-progress: false
 
 permissions:
   id-token: write   # Required for npm OIDC provenance
@@ -17,11 +27,11 @@ jobs:
       nestjs-config-aws: ${{ steps.check.outputs.nestjs-config-aws }}
       nextjs-config-aws: ${{ steps.check.outputs.nextjs-config-aws }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Check which packages need publishing
@@ -68,11 +78,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies (from root)
@@ -99,11 +109,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies (from root)
@@ -133,11 +143,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies (from root)
