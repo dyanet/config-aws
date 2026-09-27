@@ -355,10 +355,12 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ### Release Steps
 
-1. **Update Version**: Update version in `package.json`
-2. **Update Changelog**: Document changes in `CHANGELOG.md`
-3. **Create Release**: Create GitHub release with notes
-4. **Publish**: Publish to npm registry
+1. **Update Version**: Bump `version` in the `package.json` of each package that changed (and the adapters' `@dyanet/config-aws` range if they need the new core)
+2. **Update Changelog**: Document changes in that package's `CHANGELOG.md`
+3. **Merge**: Merge the PR to `main`. `publish.yml` stages each new version on npmjs through npm Trusted Publishing (OIDC) and tags it `<name>@<version>`
+4. **Approve**: A maintainer approves each staged version on npmjs.com (Staged Packages, 2FA), core before adapters
+
+See [AGENTS.md](AGENTS.md#releasing) for details. Don't publish from a local machine.
 
 ### Pre-release Testing
 
