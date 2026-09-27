@@ -1,9 +1,15 @@
 name: Publish Packages
 
-# Publishes any package whose package.json version is newer than what npm
-# has (see determine-packages). Runs on v* tags and on every push to main, so
-# merging a PR that bumps a package's version is what releases it; pushes that
-# don't bump anything skip every publish job.
+# Stages any package whose package.json version is newer than what npm has
+# and hasn't been staged yet (see determine-packages). Runs on v* tags and on
+# every push to main, so merging a PR that bumps a package's version is what
+# releases it; pushes that don't bump anything skip every publish job.
+#
+# Releases are *staged* through npm Trusted Publishing (OIDC; no token): the
+# trusted publishers allow staging, not direct publishing, so nothing goes
+# live until a maintainer approves it with 2FA at npmjs.com > Staged Packages
+# (or `npm stage approve <stage-id>`). Approve @dyanet/config-aws before the
+# adapters, since they depend on the new core version.
 on:
   push:
     branches: [main]
@@ -16,8 +22,8 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  id-token: write   # Required for npm OIDC provenance
-  contents: read
+  id-token: write   # npm Trusted Publishing (OIDC) and provenance
+  contents: write   # to tag each staged package version
 
 jobs:
   determine-packages:
@@ -32,7 +38,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Check which packages need publishing
         id: check
@@ -56,7 +61,12 @@ jobs:
             echo "  Local version: ${local_version}"
             echo "  Published version: ${published_version:-none}"
             
-            if [ -z "$published_version" ]; then
+            # npm stage list needs a logged-in user, so a staged-but-unapproved
+            # version is recognised by the tag this workflow pushes after staging.
+            if git ls-remote --exit-code --tags origin "refs/tags/${name}@${local_version}" >/dev/null; then
+              echo "  -> ${name}@${local_version} already staged (tag exists); approve it on npmjs.com"
+              echo "${output_key}=false" >> $GITHUB_OUTPUT
+            elif [ -z "$published_version" ]; then
               echo "  -> Not yet published, needs publishing"
               echo "${output_key}=true" >> $GITHUB_OUTPUT
             elif version_gt "$local_version" "$published_version"; then
@@ -83,7 +93,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies (from root)
         run: npm ci
@@ -94,17 +103,25 @@ jobs:
       - name: Test package
         run: npm run test --workspace=@dyanet/config-aws
 
-      # npm Trusted Publishing (OIDC, via id-token: write) needs npm >= 11.5.1.
-      # With it configured on npmjs.com for this package + publish.yml, no
-      # NPM_TOKEN is needed; the secret remains a fallback.
-      - name: Ensure npm supports trusted publishing
-        run: npx -y semver -r ">=11.5.1" "$(npm -v)" >/dev/null || npm install -g npm@^11.5.1
+      - name: Update npm (`npm stage` needs a current npm)
+        run: npm install -g npm@latest
 
-      - name: Publish with provenance (OIDC)
+      - name: Stage on npmjs with provenance (OIDC)
         working-directory: packages/config-aws
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm stage publish --provenance --access public
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "::notice title=Approve on npmjs::$NAME@$VERSION is staged. Approve it at npmjs.com > Staged Packages (2FA), or run: npm stage approve <stage-id>"
+
+      - name: Tag the staged version
+        working-directory: packages/config-aws
+        run: |
+          TAG="$(node -p "require('./package.json').name")@$(node -p "require('./package.json').version")"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
 
   publish-nestjs-config-aws:
     needs: [determine-packages, publish-config-aws]
@@ -120,7 +137,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies (from root)
         run: npm ci
@@ -134,17 +150,25 @@ jobs:
       - name: Test package
         run: npm run test --workspace=@dyanet/nestjs-config-aws
 
-      # npm Trusted Publishing (OIDC, via id-token: write) needs npm >= 11.5.1.
-      # With it configured on npmjs.com for this package + publish.yml, no
-      # NPM_TOKEN is needed; the secret remains a fallback.
-      - name: Ensure npm supports trusted publishing
-        run: npx -y semver -r ">=11.5.1" "$(npm -v)" >/dev/null || npm install -g npm@^11.5.1
+      - name: Update npm (`npm stage` needs a current npm)
+        run: npm install -g npm@latest
 
-      - name: Publish with provenance (OIDC)
+      - name: Stage on npmjs with provenance (OIDC)
         working-directory: packages/nestjs-config-aws
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm stage publish --provenance --access public
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "::notice title=Approve on npmjs::$NAME@$VERSION is staged. Approve it at npmjs.com > Staged Packages (2FA), or run: npm stage approve <stage-id>"
+
+      - name: Tag the staged version
+        working-directory: packages/nestjs-config-aws
+        run: |
+          TAG="$(node -p "require('./package.json').name")@$(node -p "require('./package.json').version")"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
 
   publish-nextjs-config-aws:
     needs: [determine-packages, publish-config-aws]
@@ -160,7 +184,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies (from root)
         run: npm ci
@@ -174,14 +197,22 @@ jobs:
       - name: Test package
         run: npm run test --workspace=@dyanet/nextjs-config-aws
 
-      # npm Trusted Publishing (OIDC, via id-token: write) needs npm >= 11.5.1.
-      # With it configured on npmjs.com for this package + publish.yml, no
-      # NPM_TOKEN is needed; the secret remains a fallback.
-      - name: Ensure npm supports trusted publishing
-        run: npx -y semver -r ">=11.5.1" "$(npm -v)" >/dev/null || npm install -g npm@^11.5.1
+      - name: Update npm (`npm stage` needs a current npm)
+        run: npm install -g npm@latest
 
-      - name: Publish with provenance (OIDC)
+      - name: Stage on npmjs with provenance (OIDC)
         working-directory: packages/nextjs-config-aws
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm stage publish --provenance --access public
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "::notice title=Approve on npmjs::$NAME@$VERSION is staged. Approve it at npmjs.com > Staged Packages (2FA), or run: npm stage approve <stage-id>"
+
+      - name: Tag the staged version
+        working-directory: packages/nextjs-config-aws
+        run: |
+          TAG="$(node -p "require('./package.json').name")@$(node -p "require('./package.json').version")"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
