@@ -59,7 +59,7 @@ export class SecretsManagerLoader implements ConfigLoader {
   protected importSdk(): Promise<typeof import('@aws-sdk/client-secrets-manager')> {
     return loadOptionalDependency(
       '@aws-sdk/client-secrets-manager',
-      () => import('@aws-sdk/client-secrets-manager'),
+      () => import(/* webpackIgnore: true */ /* turbopackIgnore: true */ '@aws-sdk/client-secrets-manager'),
     );
   }
 

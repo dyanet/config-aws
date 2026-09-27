@@ -5,6 +5,17 @@ All notable changes to `@dyanet/config-aws` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-09-27
+
+### 🐞 Bug Fixes
+
+- **Bundlers no longer fail on AWS SDK clients you didn't install.** 1.1.0 made the SDK clients optional at runtime, but the ESM build's literal `import('@aws-sdk/…')` calls were still resolved at build time by webpack and Turbopack, so a Next.js app without every client installed failed with `Module not found: Can't resolve '@aws-sdk/client-s3'`. The imports are now marked `webpackIgnore` / `turbopackIgnore` and stay native runtime imports. A missing client still produces the `npm install …` hint when (and only when) its loader runs. Verified with Next.js 14 and 16.
+
+### 🔧 Internal
+
+- Dev toolchain and AWS SDK dev dependencies updated; `npm audit` is clean.
+- New unit tests for `SecretsManagerLoader`, `S3Loader`, `ConfigValidationUtil` and `loadOptionalDependency`; coverage 64% → 88% statements, and the Jest coverage thresholds were raised to match.
+
 ## [1.1.0] - 2026-05-27
 
 ### ✨ Features

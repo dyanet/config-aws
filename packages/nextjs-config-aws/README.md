@@ -115,7 +115,7 @@ export default function RootLayout({ children }) {
 // app/components/client-component.tsx
 'use client';
 
-import { env } from '@dyanet/nextjs-config-aws';
+import { env } from '@dyanet/nextjs-config-aws/client';
 
 export function ClientComponent() {
   const apiUrl = env('API_URL');
@@ -124,6 +124,8 @@ export function ClientComponent() {
   return <div>API: {apiUrl}, App: {appName}</div>;
 }
 ```
+
+> **Import `env` from `@dyanet/nextjs-config-aws/client` in client components.** The main entry also exports the server-side `getConfig` and its file/AWS loaders, which a browser bundle can't include. (`env` is still exported from the main entry for server-side use and backward compatibility.)
 
 ## Environment Detection
 
@@ -249,7 +251,7 @@ Access runtime environment variables on the client.
 ```typescript
 'use client';
 
-import { env } from '@dyanet/nextjs-config-aws';
+import { env } from '@dyanet/nextjs-config-aws/client';
 ```
 
 ```typescript

@@ -3,28 +3,50 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - "**.md"
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - "**.md"
+
+# Cancel a superseded run rather than letting an outdated commit and its
+# replacement both run to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     strategy:
+      # Report every Node line's real result; the default fail-fast cancels
+      # the others on the first failure and hides version-specific breakage.
+      fail-fast: false
       matrix:
-        node-version: [20.x, 22.x]
+        # engines.node is >=20, so CI covers 20 and every newer line.
+        node-version: [20, 22, 24, 26]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      # Fails on a known high/critical advisory in anything that ships to
+      # users. Dev-only advisories are left to Dependabot.
+      - name: Audit runtime dependencies
+        if: matrix.node-version == 24
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Build all packages
         run: npm run build
@@ -35,35 +57,60 @@ jobs:
       - name: Test all packages with coverage
         run: npm run test:coverage --workspaces --if-present
 
-      - name: Upload coverage (config-aws)
-        if: matrix.node-version == '20.x'
+      - name: Upload coverage
+        if: matrix.node-version == 24
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: dyanet/config-aws
-          files: packages/config-aws/coverage/lcov.info
-          flags: config-aws
-          name: config-aws
+          files: packages/config-aws/coverage/lcov.info,packages/nestjs-config-aws/coverage/lcov.info,packages/nextjs-config-aws/coverage/lcov.info
           fail_ci_if_error: false
 
-      - name: Upload coverage (nestjs-config-aws)
-        if: matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: dyanet/config-aws
-          files: packages/nestjs-config-aws/coverage/lcov.info
-          flags: nestjs-config-aws
-          name: nestjs-config-aws
-          fail_ci_if_error: false
+  # Builds examples/nextjs-basic against the packages exactly as they would be
+  # published (npm pack), with NO AWS SDK installed. This is the scenario the
+  # unit tests can't see: a bundler resolving the optional SDK imports, and
+  # React Server Components evaluating the package's entry points.
+  nextjs-example:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest and newest majors inside the peer range (next >=14).
+        next: ["14", "16"]
+    steps:
+      - uses: actions/checkout@v7
 
-      - name: Upload coverage (nextjs-config-aws)
-        if: matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v5
+      - uses: actions/setup-node@v7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: dyanet/config-aws
-          files: packages/nextjs-config-aws/coverage/lcov.info
-          flags: nextjs-config-aws
-          name: nextjs-config-aws
-          fail_ci_if_error: false
+          node-version: 24
+          cache: npm
+
+      - name: Build and pack the packages
+        run: |
+          npm ci
+          npm run build --workspace=@dyanet/config-aws
+          npm run build --workspace=@dyanet/nextjs-config-aws
+          mkdir -p "$RUNNER_TEMP/packs"
+          npm pack --workspace=@dyanet/config-aws --pack-destination "$RUNNER_TEMP/packs"
+          npm pack --workspace=@dyanet/nextjs-config-aws --pack-destination "$RUNNER_TEMP/packs"
+
+      - name: Install the example with the packed packages
+        working-directory: examples/nextjs-basic
+        run: |
+          if [ "${{ matrix.next }}" = "14" ]; then
+            npm pkg set dependencies.next=^14.2.35 dependencies.react=^18 dependencies.react-dom=^18 \
+                        devDependencies.@types/react=^18 devDependencies.@types/react-dom=^18
+          fi
+          npm install --no-audit --no-fund
+          npm install --no-audit --no-fund "$RUNNER_TEMP"/packs/*.tgz
+          if [ -d node_modules/@aws-sdk ]; then
+            echo "::error::an AWS SDK got installed; this job must build without one"
+            exit 1
+          fi
+
+      - name: next build
+        working-directory: examples/nextjs-basic
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npx next build

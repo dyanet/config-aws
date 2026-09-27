@@ -58,7 +58,7 @@ export class SSMParameterStoreLoader implements ConfigLoader {
    * @internal
    */
   protected importSdk(): Promise<typeof import('@aws-sdk/client-ssm')> {
-    return loadOptionalDependency('@aws-sdk/client-ssm', () => import('@aws-sdk/client-ssm'));
+    return loadOptionalDependency('@aws-sdk/client-ssm', () => import(/* webpackIgnore: true */ /* turbopackIgnore: true */ '@aws-sdk/client-ssm'));
   }
 
   /**

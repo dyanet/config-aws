@@ -180,7 +180,7 @@ import { PublicEnvScript } from '@dyanet/nextjs-config-aws';
 
 // client component
 'use client';
-import { env } from '@dyanet/nextjs-config-aws';
+import { env } from '@dyanet/nextjs-config-aws/client';
 const apiUrl = env('API_URL');
 ```
 

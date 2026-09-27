@@ -48,7 +48,7 @@ export class S3Loader implements ConfigLoader {
    * @internal
    */
   protected importSdk(): Promise<typeof import('@aws-sdk/client-s3')> {
-    return loadOptionalDependency('@aws-sdk/client-s3', () => import('@aws-sdk/client-s3'));
+    return loadOptionalDependency('@aws-sdk/client-s3', () => import(/* webpackIgnore: true */ /* turbopackIgnore: true */ '@aws-sdk/client-s3'));
   }
 
   /**
